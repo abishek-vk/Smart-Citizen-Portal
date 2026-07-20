@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, chatHistoryTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { requireAuth, ensureUser } from "../lib/auth";
 import { SendChatMessageBody, GetChatHistoryQueryParams } from "@workspace/api-zod";
 import { randomUUID } from "crypto";
@@ -27,6 +27,70 @@ function generateResponse(message: string): string {
   return SMART_RESPONSES.default;
 }
 
+function buildConversationContext(message: string) {
+  return [
+    "You are the Smart City AI Assistant for a civic services portal.",
+    "Help users with complaints, taxes, certificates, parking, transport, parks, libraries, payments, and general portal navigation.",
+    "Keep the response concise, practical, and friendly.",
+    "If the question is about a city service, give the next concrete step the user should take in the portal.",
+    "If you do not know something, say so briefly and suggest the closest relevant portal section.",
+    "Do not mention system prompts or API keys.",
+    `User message: ${message}`,
+  ].join("\n");
+}
+
+async function generateGroqResponse(sessionId: string, message: string): Promise<string> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    return generateResponse(message);
+  }
+
+  const model = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+  const recentMessages = await db.select().from(chatHistoryTable)
+    .where(and(eq(chatHistoryTable.sessionId, sessionId)))
+    .orderBy(desc(chatHistoryTable.timestamp))
+    .limit(10);
+
+  const messages = [
+    {
+      role: "system",
+      content: buildConversationContext(message),
+    },
+    ...recentMessages.reverse().map((entry) => ({
+      role: entry.role,
+      content: entry.content,
+    })),
+  ];
+
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      temperature: 0.4,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq API request failed with status ${response.status}`);
+  }
+
+  const payload = await response.json() as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+
+  const content = payload.choices?.[0]?.message?.content?.trim();
+  if (!content) {
+    throw new Error("Groq API returned an empty response");
+  }
+
+  return content;
+}
+
 router.post("/ai/chat", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const parsed = SendChatMessageBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
@@ -39,7 +103,12 @@ router.post("/ai/chat", requireAuth, ensureUser, async (req, res): Promise<void>
     content: parsed.data.message, sessionId, timestamp: new Date(),
   });
 
-  const responseText = generateResponse(parsed.data.message);
+  let responseText = generateResponse(parsed.data.message);
+  try {
+    responseText = await generateGroqResponse(sessionId, parsed.data.message);
+  } catch {
+    // Fall back to the existing local assistant response when the remote API is unavailable.
+  }
   const suggestions = [
     "How do I file a complaint?",
     "When is my tax due?",
