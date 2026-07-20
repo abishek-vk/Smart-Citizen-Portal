@@ -1,0 +1,593 @@
+Smart City Digital Citizen Portal — Enterprise Production System
+
+You are acting as a Principal Software Architect, Senior Full Stack Engineer, Senior UI/UX Designer, AI Engineer, DevOps Engineer, Database Architect, and Security Engineer.
+
+Your objective is to design and build a production-ready Smart City Digital Citizen Portal that meets enterprise software standards.
+
+This must NOT resemble a college project or CRUD demo.
+
+The final application should be polished enough to be deployed by a real municipal government.
+
+Primary Goal
+
+Build a centralized Smart City platform that consolidates municipal services into a single secure digital ecosystem for citizens and government administrators.
+
+The application should prioritize:
+
+Scalability
+Security
+Accessibility (WCAG AA)
+Maintainability
+Performance
+Clean Architecture
+Responsive Design
+Enterprise UI/UX
+Production Deployment
+
+Every implementation decision should follow software engineering best practices.
+
+Technology Stack (Strict)
+Frontend
+React 19
+Next.js 15 (App Router)
+TypeScript
+TailwindCSS
+shadcn/ui
+Framer Motion
+React Hook Form
+Zod
+TanStack Query
+React Table
+Recharts
+Lucide Icons
+Leaflet (OpenStreetMap) or Google Maps
+Backend
+Node.js
+Express.js
+TypeScript
+REST APIs
+Prisma ORM
+Clean Architecture
+Repository Pattern
+Service Layer
+Database
+
+PostgreSQL
+
+Hosted using Supabase PostgreSQL.
+
+Authentication
+
+Supabase Authentication
+
+Implement
+
+Email & Password
+Google OAuth
+JWT
+Refresh Tokens
+Session Management
+Email Verification
+Password Reset
+Protected Routes
+RBAC
+Storage
+
+Supabase Storage
+
+Store
+
+Complaint Images
+Certificates
+Supporting Documents
+User Profile Photos
+Realtime
+
+Supabase Realtime
+
+Implement live updates for
+
+Complaint status
+Notifications
+Certificate approval
+Garbage pickup updates
+Parking reservations
+AI
+
+Use OpenAI API or Gemini API.
+
+Implement
+
+AI Complaint Categorization
+
+Automatically classify complaints into:
+
+Electricity
+Water
+Roads
+Garbage
+Transport
+Street Lights
+Drainage
+Public Safety
+Environment
+Others
+
+Return
+
+Category
+Confidence Score
+AI Priority Prediction
+
+Predict
+
+Low
+Medium
+High
+Critical
+
+Consider
+
+Complaint Description
+Keywords
+Department
+Location
+Previous Complaints
+Uploaded Image (optional)
+
+Return
+
+Priority
+Reasoning
+Estimated Resolution Time
+AI Citizen Assistant
+
+A context-aware chatbot capable of
+
+Municipal FAQs
+Complaint assistance
+Tax guidance
+Certificate procedures
+Navigation help
+Service recommendations
+Complaint status lookup
+Context memory
+Payments
+
+Mock payment gateway
+
+Implement
+
+Property Tax
+Water Tax
+
+Include
+
+Payment History
+Download Receipt
+Invoice Generation
+Notifications
+
+Support
+
+Email
+In-App
+Realtime
+
+Events
+
+Complaint Updates
+Tax Due
+Certificate Approved
+Garbage Pickup
+Parking Reminder
+Transport Alerts
+UI/UX Requirements
+
+The design must resemble a premium government digital platform inspired by:
+
+Apple Human Interface Guidelines
+Microsoft Fluent Design
+GOV.UK Design System
+Material Design 3
+
+Characteristics
+
+Elegant
+Minimal
+Spacious Layout
+Modern Typography
+Rounded Cards
+Glassmorphism
+Soft Shadows
+Gradient Highlights
+Motion Design
+Skeleton Loaders
+Empty States
+Accessible Components
+Mobile-first Responsive Layout
+Dark Mode
+Light Mode
+
+Include
+
+Interactive Maps
+Beautiful Charts
+Progress Timelines
+Animated Statistics
+Notification Center
+Command Palette
+Global Search
+User Roles
+Citizen
+
+Features
+
+Register
+Login
+Profile Management
+Property Tax
+Water Tax
+Birth Certificate
+Death Certificate
+Complaint Management
+Complaint Tracking
+Garbage Pickup
+Parking Reservation
+Public Transport
+Libraries
+Parks
+Feedback
+Notifications
+AI Chatbot
+Download Certificates
+Admin
+
+Features
+
+Analytics Dashboard
+Citizen Management
+Complaint Management
+Tax Management
+Certificate Approval
+Garbage Operations
+Parking Management
+Library Management
+Parks Management
+Feedback Analytics
+AI Dashboard
+Reports
+Audit Logs
+Required Modules
+
+Implement production-ready modules for
+
+Authentication
+Dashboard
+Property Tax
+Water Tax
+Birth Certificates
+Death Certificates
+Complaint Management
+Garbage Collection
+Public Transport
+Parking
+Parks
+Libraries
+Feedback
+AI Assistant
+Notifications
+Reports
+Settings
+Audit Logs
+
+Each module must include
+
+Validation
+Error Handling
+Loading States
+Empty States
+Pagination
+Search
+Filters
+Sorting
+Responsive UI
+Dashboard
+Citizen Dashboard
+
+Widgets
+
+Active Complaints
+Tax Summary
+Certificates
+Notifications
+Recent Activities
+Quick Actions
+AI Suggestions
+Upcoming Payments
+Complaint Status Chart
+Admin Dashboard
+
+Widgets
+
+Revenue
+Complaint Statistics
+Department Performance
+Heat Maps
+Citizen Growth
+AI Analytics
+Complaint Trends
+Resolution Time
+Recent Activities
+Geographic Complaint Distribution
+Database Design
+
+Design a fully normalized PostgreSQL database.
+
+Every table must include
+
+UUID
+created_at
+updated_at
+deleted_at (Soft Delete)
+
+Add
+
+Foreign Keys
+Indexes
+Composite Indexes
+Constraints
+Cascade Rules
+
+Core Tables
+
+Users
+Roles
+Departments
+Complaints
+ComplaintImages
+Certificates
+PropertyTaxes
+WaterTaxes
+Payments
+GarbageRequests
+ParkingLots
+ParkingReservations
+Libraries
+Books
+Borrowings
+Parks
+Notifications
+Feedback
+AuditLogs
+AIAnalysis
+ChatHistory
+Reports
+
+Generate complete Prisma models.
+
+Backend Requirements
+
+Follow enterprise architecture.
+
+src/
+
+config/
+controllers/
+services/
+repositories/
+routes/
+middlewares/
+validators/
+schemas/
+utils/
+database/
+prisma/
+types/
+interfaces/
+constants/
+ai/
+jobs/
+events/
+logs/
+
+Implement
+
+Repository Pattern
+Dependency Injection
+DTOs
+Centralized Error Handling
+Request Validation
+API Versioning
+Rate Limiting
+Logging
+Pagination
+Filtering
+Search
+Sorting
+Frontend Structure
+app/
+
+components/
+features/
+hooks/
+contexts/
+providers/
+lib/
+services/
+types/
+utils/
+constants/
+styles/
+
+Use
+
+Feature-based architecture
+Lazy loading
+Suspense
+Server Components where appropriate
+Client Components only when needed
+API Standards
+
+Design REST APIs following OpenAPI standards.
+
+Implement
+
+Controllers
+Services
+Repositories
+DTOs
+Validation
+Middleware
+Authentication
+Authorization
+Pagination
+Filtering
+Search
+Sorting
+Rate Limiting
+
+Use consistent response format.
+
+Security
+
+Implement
+
+RBAC
+JWT Validation
+Helmet
+CORS
+CSRF Protection
+XSS Protection
+SQL Injection Protection
+Input Validation
+Secure Cookies
+Environment Variable Encryption
+Audit Logging
+Performance
+
+Implement
+
+Image Optimization
+Code Splitting
+Dynamic Imports
+Lazy Loading
+Caching
+Query Optimization
+Prisma Optimization
+React Memoization
+Virtualized Tables
+API Compression
+Accessibility
+
+Follow WCAG AA
+
+Support
+
+Keyboard Navigation
+Screen Readers
+Proper Contrast
+Focus States
+Semantic HTML
+ARIA Labels
+DevOps
+
+Provide
+
+Docker
+Docker Compose
+GitHub Actions CI/CD
+ESLint
+Prettier
+Husky
+Commitlint
+Environment Configurations
+
+Deployment
+
+Frontend
+
+Vercel
+
+Backend
+
+Render
+
+Database
+
+Supabase PostgreSQL
+Documentation
+
+Generate
+
+README
+Installation Guide
+API Documentation
+Swagger/OpenAPI
+Architecture Diagram
+ER Diagram
+Database Schema
+Deployment Guide
+Environment Variables
+Testing Guide
+Future Enhancements
+Testing
+
+Include
+
+Unit Tests
+Integration Tests
+API Tests
+Component Tests
+
+Use
+
+Vitest
+React Testing Library
+Supertest
+Code Quality
+
+Follow
+
+SOLID Principles
+DRY
+KISS
+Clean Code
+Feature-Based Architecture
+Reusable Components
+Strong Type Safety
+Comprehensive Comments
+Production Logging
+Consistent Naming Conventions
+Expected Deliverables
+
+Generate a complete, production-ready project including:
+
+Full Next.js frontend
+Full Express backend
+PostgreSQL schema
+Prisma schema
+Supabase authentication
+Supabase storage
+Supabase realtime
+AI integrations
+REST APIs
+Responsive UI
+Beautiful dashboards
+Interactive maps
+Analytics
+Charts
+Dummy seed data
+Docker configuration
+CI/CD setup
+Deployment configuration
+Comprehensive documentation
+Complete source code with comments
+Generation Rules (Very Important)
+Do not skip any feature.
+Do not use placeholder implementations where full implementations are feasible.
+Follow enterprise-grade architecture and coding standards.
+Maintain consistent UI/UX across the application.
+Generate code incrementally in logical phases (architecture → database → backend → frontend → AI → deployment → testing → documentation) to stay within context limits.
+Ensure every module is production-ready, scalable, secure, and maintainable.
+Treat this as software intended for deployment by a real municipal government, not as a demonstration or academic project.

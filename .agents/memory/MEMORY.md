@@ -1,0 +1,2 @@
+- [Smart City Portal stack](smart-city-stack.md) — React+Vite frontend, Express 5 API, Postgres+Drizzle, Clerk auth, Gemini AI (mocked); all wired and running.
+- [API Zod schema naming](api-zod-names.md) — Correct schema names differ from intuitive names; always grep lib/api-zod/src/generated/api.ts before using a schema in routes.

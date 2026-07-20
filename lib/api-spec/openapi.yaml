@@ -2,21 +2,54 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 1.0.0
+  description: Smart City Digital Citizen Portal API
 servers:
   - url: /api
     description: Base API path
+
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: User authentication and profile
+  - name: dashboard
+    description: Dashboard statistics and summaries
+  - name: complaints
+    description: Citizen complaint management
+  - name: taxes
+    description: Property and water tax management
+  - name: certificates
+    description: Birth and death certificates
+  - name: garbage
+    description: Garbage collection requests
+  - name: parking
+    description: Parking lots and reservations
+  - name: transport
+    description: Public transport routes and schedules
+  - name: parks
+    description: Parks information and bookings
+  - name: libraries
+    description: Libraries, books, and borrowings
+  - name: payments
+    description: Payment history and receipts
+  - name: notifications
+    description: User notifications
+  - name: feedback
+    description: Citizen feedback
+  - name: ai
+    description: AI assistant and analysis
+  - name: departments
+    description: City departments
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +57,1237 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─────────────────────────────── AUTH ───────────────────────────────
+  /auth/profile:
+    get:
+      operationId: getProfile
+      tags: [auth]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+
+  # ─────────────────────────────── DASHBOARD ───────────────────────────────
+  /dashboard/citizen:
+    get:
+      operationId: getCitizenDashboard
+      tags: [dashboard]
+      summary: Get citizen dashboard summary
+      responses:
+        "200":
+          description: Citizen dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitizenDashboard"
+
+  /dashboard/admin:
+    get:
+      operationId: getAdminDashboard
+      tags: [dashboard]
+      summary: Get admin dashboard analytics
+      responses:
+        "200":
+          description: Admin dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDashboard"
+
+  /dashboard/complaint-trends:
+    get:
+      operationId: getComplaintTrends
+      tags: [dashboard]
+      summary: Get complaint trends over time
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, 1y]
+            default: 30d
+      responses:
+        "200":
+          description: Complaint trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendPoint"
+
+  /dashboard/department-performance:
+    get:
+      operationId: getDepartmentPerformance
+      tags: [dashboard]
+      summary: Get department performance metrics
+      responses:
+        "200":
+          description: Department performance data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentMetric"
+
+  # ─────────────────────────────── COMPLAINTS ───────────────────────────────
+  /complaints:
+    get:
+      operationId: listComplaints
+      tags: [complaints]
+      summary: List complaints
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, resolved, closed]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paginated complaints list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplaintListResponse"
+    post:
+      operationId: createComplaint
+      tags: [complaints]
+      summary: Submit a new complaint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplaintInput"
+      responses:
+        "201":
+          description: Complaint created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+
+  /complaints/{id}:
+    get:
+      operationId: getComplaint
+      tags: [complaints]
+      summary: Get complaint by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Complaint details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+    patch:
+      operationId: updateComplaint
+      tags: [complaints]
+      summary: Update complaint status (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplaintUpdate"
+      responses:
+        "200":
+          description: Updated complaint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+
+  /complaints/{id}/ai-analysis:
+    post:
+      operationId: analyzeComplaint
+      tags: [complaints, ai]
+      summary: Run AI analysis on a complaint
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: AI analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIAnalysis"
+
+  /complaints/stats:
+    get:
+      operationId: getComplaintStats
+      tags: [complaints]
+      summary: Get complaint statistics summary
+      responses:
+        "200":
+          description: Complaint stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplaintStats"
+
+  # ─────────────────────────────── TAXES ───────────────────────────────
+  /taxes/property:
+    get:
+      operationId: listPropertyTaxes
+      tags: [taxes]
+      summary: List property tax bills
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, paid, overdue]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Property tax bills
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyTaxListResponse"
+
+  /taxes/property/{id}:
+    get:
+      operationId: getPropertyTax
+      tags: [taxes]
+      summary: Get property tax bill by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Property tax bill details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyTax"
+
+  /taxes/property/{id}/pay:
+    post:
+      operationId: payPropertyTax
+      tags: [taxes]
+      summary: Pay property tax bill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "200":
+          description: Payment receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceipt"
+
+  /taxes/water:
+    get:
+      operationId: listWaterTaxes
+      tags: [taxes]
+      summary: List water tax bills
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, paid, overdue]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Water tax bills
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaterTaxListResponse"
+
+  /taxes/water/{id}:
+    get:
+      operationId: getWaterTax
+      tags: [taxes]
+      summary: Get water tax bill by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Water tax bill details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaterTax"
+
+  /taxes/water/{id}/pay:
+    post:
+      operationId: payWaterTax
+      tags: [taxes]
+      summary: Pay water tax bill
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "200":
+          description: Payment receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceipt"
+
+  /taxes/summary:
+    get:
+      operationId: getTaxSummary
+      tags: [taxes]
+      summary: Get citizen tax summary (outstanding amounts, due dates)
+      responses:
+        "200":
+          description: Tax summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaxSummary"
+
+  # ─────────────────────────────── CERTIFICATES ───────────────────────────────
+  /certificates:
+    get:
+      operationId: listCertificates
+      tags: [certificates]
+      summary: List certificate applications
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [birth, death]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, under_review, approved, rejected]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Certificate list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CertificateListResponse"
+    post:
+      operationId: applyCertificate
+      tags: [certificates]
+      summary: Apply for a certificate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateInput"
+      responses:
+        "201":
+          description: Certificate application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+
+  /certificates/{id}:
+    get:
+      operationId: getCertificate
+      tags: [certificates]
+      summary: Get certificate application by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Certificate details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+    patch:
+      operationId: updateCertificate
+      tags: [certificates]
+      summary: Update certificate status (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CertificateUpdate"
+      responses:
+        "200":
+          description: Updated certificate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Certificate"
+
+  # ─────────────────────────────── GARBAGE ───────────────────────────────
+  /garbage:
+    get:
+      operationId: listGarbageRequests
+      tags: [garbage]
+      summary: List garbage pickup requests
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in_progress, completed, cancelled]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Garbage requests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarbageListResponse"
+    post:
+      operationId: createGarbageRequest
+      tags: [garbage]
+      summary: Request garbage pickup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarbageInput"
+      responses:
+        "201":
+          description: Garbage pickup request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarbageRequest"
+
+  /garbage/{id}:
+    get:
+      operationId: getGarbageRequest
+      tags: [garbage]
+      summary: Get garbage request by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Garbage request details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarbageRequest"
+    patch:
+      operationId: updateGarbageRequest
+      tags: [garbage]
+      summary: Update garbage request status (admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GarbageUpdate"
+      responses:
+        "200":
+          description: Updated garbage request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GarbageRequest"
+
+  # ─────────────────────────────── PARKING ───────────────────────────────
+  /parking/lots:
+    get:
+      operationId: listParkingLots
+      tags: [parking]
+      summary: List all parking lots
+      parameters:
+        - name: available
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Parking lots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ParkingLot"
+
+  /parking/reservations:
+    get:
+      operationId: listParkingReservations
+      tags: [parking]
+      summary: List user parking reservations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, cancelled]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Parking reservations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingReservationListResponse"
+    post:
+      operationId: createParkingReservation
+      tags: [parking]
+      summary: Make a parking reservation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ParkingReservationInput"
+      responses:
+        "201":
+          description: Reservation created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingReservation"
+
+  /parking/reservations/{id}:
+    get:
+      operationId: getParkingReservation
+      tags: [parking]
+      summary: Get parking reservation by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Parking reservation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingReservation"
+    delete:
+      operationId: cancelParkingReservation
+      tags: [parking]
+      summary: Cancel a parking reservation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Reservation cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ParkingReservation"
+
+  # ─────────────────────────────── TRANSPORT ───────────────────────────────
+  /transport/routes:
+    get:
+      operationId: listTransportRoutes
+      tags: [transport]
+      summary: List public transport routes
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [bus, metro, tram]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transport routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TransportRoute"
+
+  /transport/routes/{id}:
+    get:
+      operationId: getTransportRoute
+      tags: [transport]
+      summary: Get transport route details with stops
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Transport route details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransportRouteDetail"
+
+  /transport/alerts:
+    get:
+      operationId: listTransportAlerts
+      tags: [transport]
+      summary: Get active transport alerts
+      responses:
+        "200":
+          description: Transport alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TransportAlert"
+
+  # ─────────────────────────────── PARKS ───────────────────────────────
+  /parks:
+    get:
+      operationId: listParks
+      tags: [parks]
+      summary: List all parks
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Parks list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Park"
+
+  /parks/{id}:
+    get:
+      operationId: getPark
+      tags: [parks]
+      summary: Get park details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Park details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Park"
+
+  # ─────────────────────────────── LIBRARIES ───────────────────────────────
+  /libraries:
+    get:
+      operationId: listLibraries
+      tags: [libraries]
+      summary: List all libraries
+      responses:
+        "200":
+          description: Libraries list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Library"
+
+  /libraries/books:
+    get:
+      operationId: listBooks
+      tags: [libraries]
+      summary: Search books across all libraries
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: libraryId
+          in: query
+          schema:
+            type: string
+        - name: available
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Books list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookListResponse"
+
+  /libraries/borrowings:
+    get:
+      operationId: listBorrowings
+      tags: [libraries]
+      summary: List user borrowings
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, returned, overdue]
+      responses:
+        "200":
+          description: User borrowings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Borrowing"
+    post:
+      operationId: borrowBook
+      tags: [libraries]
+      summary: Borrow a book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BorrowInput"
+      responses:
+        "201":
+          description: Book borrowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Borrowing"
+
+  /libraries/borrowings/{id}/return:
+    post:
+      operationId: returnBook
+      tags: [libraries]
+      summary: Return a borrowed book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Book returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Borrowing"
+
+  # ─────────────────────────────── PAYMENTS ───────────────────────────────
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payment history
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [property_tax, water_tax, parking, other]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Payment history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentListResponse"
+
+  /payments/{id}:
+    get:
+      operationId: getPayment
+      tags: [payments]
+      summary: Get payment details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  # ─────────────────────────────── NOTIFICATIONS ───────────────────────────────
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List user notifications
+      parameters:
+        - name: unread
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Notifications list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /notifications/mark-all-read:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All notifications marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/unread-count:
+    get:
+      operationId: getUnreadNotificationCount
+      tags: [notifications]
+      summary: Get unread notification count
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadCount"
+
+  # ─────────────────────────────── FEEDBACK ───────────────────────────────
+  /feedback:
+    get:
+      operationId: listFeedback
+      tags: [feedback]
+      summary: List feedback (admin)
+      parameters:
+        - name: rating
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Feedback list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackListResponse"
+    post:
+      operationId: submitFeedback
+      tags: [feedback]
+      summary: Submit feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackInput"
+      responses:
+        "201":
+          description: Feedback submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Feedback"
+
+  /feedback/stats:
+    get:
+      operationId: getFeedbackStats
+      tags: [feedback]
+      summary: Get feedback statistics
+      responses:
+        "200":
+          description: Feedback stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackStats"
+
+  # ─────────────────────────────── AI ───────────────────────────────
+  /ai/chat:
+    post:
+      operationId: sendChatMessage
+      tags: [ai]
+      summary: Send a message to the AI citizen assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMessageInput"
+      responses:
+        "200":
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+
+  /ai/chat/history:
+    get:
+      operationId: getChatHistory
+      tags: [ai]
+      summary: Get AI chat history for current user
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Chat history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChatMessage"
+
+  /ai/chat/clear:
+    delete:
+      operationId: clearChatHistory
+      tags: [ai]
+      summary: Clear AI chat history
+      responses:
+        "200":
+          description: Chat history cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ─────────────────────────────── DEPARTMENTS ───────────────────────────────
+  /departments:
+    get:
+      operationId: listDepartments
+      tags: [departments]
+      summary: List all city departments
+      responses:
+        "200":
+          description: Departments list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+
+  # ─────────────────────────────── ADMIN ───────────────────────────────
+  /admin/citizens:
+    get:
+      operationId: listCitizens
+      tags: [admin]
+      summary: List all citizens (admin)
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Citizens list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitizenListResponse"
+
+  /admin/audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [admin]
+      summary: List audit logs (admin)
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: userId
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Audit logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogListResponse"
+
+  /admin/reports/revenue:
+    get:
+      operationId: getRevenueReport
+      tags: [admin]
+      summary: Get revenue report
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, 1y]
+            default: 30d
+      responses:
+        "200":
+          description: Revenue report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevenueReport"
+
+  /admin/reports/services:
+    get:
+      operationId: getServicesReport
+      tags: [admin]
+      summary: Get services usage report
+      responses:
+        "200":
+          description: Services report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServicesReport"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +1295,1310 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        totalPages:
+          type: integer
+      required: [total, page, limit, totalPages]
+
+    UnreadCount:
+      type: object
+      properties:
+        count:
+          type: integer
+      required: [count]
+
+    # ─── User / Auth ───
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        clerkId:
+          type: string
+        email:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        avatarUrl:
+          type: ["string", "null"]
+        role:
+          type: string
+          enum: [citizen, admin, super_admin]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, clerkId, email, firstName, lastName, role, createdAt]
+
+    ProfileUpdate:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        city:
+          type: string
+
+    # ─── Dashboard ───
+    CitizenDashboard:
+      type: object
+      properties:
+        activeComplaints:
+          type: integer
+        pendingCertificates:
+          type: integer
+        totalTaxDue:
+          type: number
+        unreadNotifications:
+          type: integer
+        recentComplaints:
+          type: array
+          items:
+            $ref: "#/components/schemas/Complaint"
+        upcomingPayments:
+          type: array
+          items:
+            $ref: "#/components/schemas/UpcomingPayment"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+        quickStats:
+          $ref: "#/components/schemas/QuickStats"
+      required: [activeComplaints, pendingCertificates, totalTaxDue, unreadNotifications, recentComplaints, upcomingPayments, recentActivity, quickStats]
+
+    AdminDashboard:
+      type: object
+      properties:
+        totalCitizens:
+          type: integer
+        totalComplaints:
+          type: integer
+        resolvedComplaintsToday:
+          type: integer
+        totalRevenue:
+          type: number
+        pendingCertificates:
+          type: integer
+        complaintsByStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        complaintsByCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryCount"
+        revenueByType:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenueByType"
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+        citizenGrowth:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+      required: [totalCitizens, totalComplaints, resolvedComplaintsToday, totalRevenue, pendingCertificates, complaintsByStatus, complaintsByCategory, revenueByType, recentActivity, citizenGrowth]
+
+    QuickStats:
+      type: object
+      properties:
+        complaintResolutionRate:
+          type: number
+        avgResolutionDays:
+          type: number
+        taxComplianceRate:
+          type: number
+      required: [complaintResolutionRate, avgResolutionDays, taxComplianceRate]
+
+    TrendPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        value:
+          type: number
+        label:
+          type: ["string", "null"]
+      required: [date, value]
+
+    DepartmentMetric:
+      type: object
+      properties:
+        department:
+          type: string
+        resolved:
+          type: integer
+        pending:
+          type: integer
+        avgDays:
+          type: number
+        score:
+          type: number
+      required: [department, resolved, pending, avgDays, score]
+
+    StatusCount:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+      required: [status, count]
+
+    CategoryCount:
+      type: object
+      properties:
+        category:
+          type: string
+        count:
+          type: integer
+      required: [category, count]
+
+    RevenueByType:
+      type: object
+      properties:
+        type:
+          type: string
+        amount:
+          type: number
+      required: [type, amount]
+
+    UpcomingPayment:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        amount:
+          type: number
+        dueDate:
+          type: string
+          format: date
+        status:
+          type: string
+      required: [id, type, amount, dueDate, status]
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: ["string", "null"]
+      required: [id, type, description, timestamp]
+
+    # ─── Complaints ───
+    Complaint:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [electricity, water, roads, garbage, transport, street_lights, drainage, public_safety, environment, other]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, closed]
+        location:
+          type: string
+        address:
+          type: ["string", "null"]
+        latitude:
+          type: ["number", "null"]
+        longitude:
+          type: ["number", "null"]
+        userId:
+          type: string
+        departmentId:
+          type: ["string", "null"]
+        assignedTo:
+          type: ["string", "null"]
+        aiCategory:
+          type: ["string", "null"]
+        aiPriority:
+          type: ["string", "null"]
+        aiConfidence:
+          type: ["number", "null"]
+        estimatedResolution:
+          type: ["string", "null"]
+        resolvedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        user:
+          $ref: "#/components/schemas/UserProfile"
+      required: [id, title, description, category, priority, status, location, userId, createdAt, updatedAt, user]
+
+    ComplaintInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 5
+        description:
+          type: string
+          minLength: 20
+        category:
+          type: string
+          enum: [electricity, water, roads, garbage, transport, street_lights, drainage, public_safety, environment, other]
+        location:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        departmentId:
+          type: string
+      required: [title, description, category, location]
+
+    ComplaintUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, in_progress, resolved, closed]
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        assignedTo:
+          type: string
+        departmentId:
+          type: string
+        estimatedResolution:
+          type: string
+
+    ComplaintListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Complaint"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    ComplaintStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        pending:
+          type: integer
+        inProgress:
+          type: integer
+        resolved:
+          type: integer
+        closed:
+          type: integer
+        avgResolutionDays:
+          type: number
+      required: [total, pending, inProgress, resolved, closed, avgResolutionDays]
+
+    AIAnalysis:
+      type: object
+      properties:
+        complaintId:
+          type: string
+        category:
+          type: string
+        confidence:
+          type: number
+        priority:
+          type: string
+        reasoning:
+          type: string
+        estimatedResolutionTime:
+          type: string
+        suggestedDepartment:
+          type: string
+      required: [complaintId, category, confidence, priority, reasoning, estimatedResolutionTime, suggestedDepartment]
+
+    # ─── Property Tax ───
+    PropertyTax:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        propertyId:
+          type: string
+        propertyAddress:
+          type: string
+        propertyType:
+          type: string
+          enum: [residential, commercial, industrial]
+        assessedValue:
+          type: number
+        taxRate:
+          type: number
+        taxAmount:
+          type: number
+        penaltyAmount:
+          type: number
+        totalDue:
+          type: number
+        dueDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, paid, overdue]
+        financialYear:
+          type: string
+        paidAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, propertyId, propertyAddress, propertyType, assessedValue, taxRate, taxAmount, penaltyAmount, totalDue, dueDate, status, financialYear, createdAt]
+
+    PropertyTaxListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PropertyTax"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── Water Tax ───
+    WaterTax:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        connectionId:
+          type: string
+        connectionAddress:
+          type: string
+        meterReading:
+          type: number
+        previousReading:
+          type: number
+        unitsConsumed:
+          type: number
+        ratePerUnit:
+          type: number
+        taxAmount:
+          type: number
+        penaltyAmount:
+          type: number
+        totalDue:
+          type: number
+        billingPeriod:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pending, paid, overdue]
+        paidAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, connectionId, connectionAddress, meterReading, previousReading, unitsConsumed, ratePerUnit, taxAmount, penaltyAmount, totalDue, billingPeriod, dueDate, status, createdAt]
+
+    WaterTaxListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/WaterTax"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    TaxSummary:
+      type: object
+      properties:
+        propertyTaxDue:
+          type: number
+        waterTaxDue:
+          type: number
+        totalDue:
+          type: number
+        overdueCount:
+          type: integer
+        nextDueDate:
+          type: ["string", "null"]
+          format: date
+      required: [propertyTaxDue, waterTaxDue, totalDue, overdueCount]
+
+    # ─── Certificates ───
+    Certificate:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [birth, death]
+        status:
+          type: string
+          enum: [pending, under_review, approved, rejected]
+        applicantName:
+          type: string
+        applicantRelation:
+          type: string
+        subjectName:
+          type: string
+        subjectDateOfBirth:
+          type: ["string", "null"]
+          format: date
+        subjectDateOfDeath:
+          type: ["string", "null"]
+          format: date
+        placeOfEvent:
+          type: string
+        remarks:
+          type: ["string", "null"]
+        adminRemarks:
+          type: ["string", "null"]
+        certificateNumber:
+          type: ["string", "null"]
+        approvedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, userId, type, status, applicantName, applicantRelation, subjectName, placeOfEvent, createdAt, updatedAt]
+
+    CertificateInput:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [birth, death]
+        applicantName:
+          type: string
+        applicantRelation:
+          type: string
+        subjectName:
+          type: string
+        subjectDateOfBirth:
+          type: string
+          format: date
+        subjectDateOfDeath:
+          type: string
+          format: date
+        placeOfEvent:
+          type: string
+        remarks:
+          type: string
+      required: [type, applicantName, applicantRelation, subjectName, placeOfEvent]
+
+    CertificateUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, under_review, approved, rejected]
+        adminRemarks:
+          type: string
+        certificateNumber:
+          type: string
+
+    CertificateListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Certificate"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── Garbage ───
+    GarbageRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        address:
+          type: string
+        wasteType:
+          type: string
+          enum: [household, recyclable, hazardous, electronic, bulk]
+        scheduledDate:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        notes:
+          type: ["string", "null"]
+        driverName:
+          type: ["string", "null"]
+        completedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, address, wasteType, scheduledDate, timeSlot, status, createdAt]
+
+    GarbageInput:
+      type: object
+      properties:
+        address:
+          type: string
+        wasteType:
+          type: string
+          enum: [household, recyclable, hazardous, electronic, bulk]
+        scheduledDate:
+          type: string
+          format: date
+        timeSlot:
+          type: string
+        notes:
+          type: string
+      required: [address, wasteType, scheduledDate, timeSlot]
+
+    GarbageUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        driverName:
+          type: string
+
+    GarbageListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/GarbageRequest"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── Parking ───
+    ParkingLot:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        totalSpots:
+          type: integer
+        availableSpots:
+          type: integer
+        pricePerHour:
+          type: number
+        openingTime:
+          type: string
+        closingTime:
+          type: string
+        amenities:
+          type: array
+          items:
+            type: string
+        isActive:
+          type: boolean
+      required: [id, name, address, latitude, longitude, totalSpots, availableSpots, pricePerHour, openingTime, closingTime, amenities, isActive]
+
+    ParkingReservation:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        parkingLotId:
+          type: string
+        parkingLot:
+          $ref: "#/components/schemas/ParkingLot"
+        vehicleNumber:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, bicycle]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, completed, cancelled]
+        totalAmount:
+          type: number
+        spotNumber:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, parkingLotId, parkingLot, vehicleNumber, vehicleType, startTime, endTime, status, totalAmount, createdAt]
+
+    ParkingReservationInput:
+      type: object
+      properties:
+        parkingLotId:
+          type: string
+        vehicleNumber:
+          type: string
+        vehicleType:
+          type: string
+          enum: [car, motorcycle, truck, bicycle]
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+      required: [parkingLotId, vehicleNumber, vehicleType, startTime, endTime]
+
+    ParkingReservationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParkingReservation"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── Transport ───
+    TransportRoute:
+      type: object
+      properties:
+        id:
+          type: string
+        routeNumber:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum: [bus, metro, tram]
+        origin:
+          type: string
+        destination:
+          type: string
+        frequency:
+          type: integer
+        operatingHours:
+          type: string
+        fare:
+          type: number
+        totalStops:
+          type: integer
+        isActive:
+          type: boolean
+      required: [id, routeNumber, name, type, origin, destination, frequency, operatingHours, fare, totalStops, isActive]
+
+    TransportStop:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        sequence:
+          type: integer
+        latitude:
+          type: number
+        longitude:
+          type: number
+        arrivalTime:
+          type: string
+      required: [id, name, sequence, latitude, longitude, arrivalTime]
+
+    TransportRouteDetail:
+      type: object
+      properties:
+        route:
+          $ref: "#/components/schemas/TransportRoute"
+        stops:
+          type: array
+          items:
+            $ref: "#/components/schemas/TransportStop"
+      required: [route, stops]
+
+    TransportAlert:
+      type: object
+      properties:
+        id:
+          type: string
+        routeId:
+          type: ["string", "null"]
+        title:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [info, warning, critical]
+        expiresAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, message, severity, createdAt]
+
+    # ─── Parks ───
+    Park:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+        longitude:
+          type: number
+        area:
+          type: number
+        openingTime:
+          type: string
+        closingTime:
+          type: string
+        amenities:
+          type: array
+          items:
+            type: string
+        imageUrl:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+      required: [id, name, description, address, latitude, longitude, area, openingTime, closingTime, amenities, isActive]
+
+    # ─── Libraries ───
+    Library:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        openingTime:
+          type: string
+        closingTime:
+          type: string
+        totalBooks:
+          type: integer
+        availableBooks:
+          type: integer
+        isActive:
+          type: boolean
+      required: [id, name, address, phone, openingTime, closingTime, totalBooks, availableBooks, isActive]
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: string
+        libraryId:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        isbn:
+          type: ["string", "null"]
+        genre:
+          type: string
+        publishedYear:
+          type: ["integer", "null"]
+        totalCopies:
+          type: integer
+        availableCopies:
+          type: integer
+        isAvailable:
+          type: boolean
+      required: [id, libraryId, title, author, genre, totalCopies, availableCopies, isAvailable]
+
+    BookListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Book"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    Borrowing:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        bookId:
+          type: string
+        book:
+          $ref: "#/components/schemas/Book"
+        borrowedAt:
+          type: string
+          format: date-time
+        dueDate:
+          type: string
+          format: date
+        returnedAt:
+          type: ["string", "null"]
+          format: date-time
+        status:
+          type: string
+          enum: [active, returned, overdue]
+        fineDue:
+          type: number
+      required: [id, userId, bookId, book, borrowedAt, dueDate, status, fineDue]
+
+    BorrowInput:
+      type: object
+      properties:
+        bookId:
+          type: string
+      required: [bookId]
+
+    # ─── Payments ───
+    PaymentInput:
+      type: object
+      properties:
+        paymentMethod:
+          type: string
+          enum: [credit_card, debit_card, net_banking, upi, wallet]
+        cardLast4:
+          type: string
+      required: [paymentMethod]
+
+    PaymentReceipt:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        receiptNumber:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        status:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+      required: [paymentId, receiptNumber, amount, paymentMethod, status, paidAt]
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [property_tax, water_tax, parking, other]
+        referenceId:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        receiptNumber:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, pending, refunded]
+        paidAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, type, referenceId, amount, paymentMethod, receiptNumber, status, createdAt]
+
+    PaymentListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── Notifications ───
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        message:
+          type: string
+        type:
+          type: string
+          enum: [complaint_update, tax_due, certificate_approved, garbage_pickup, parking_reminder, transport_alert, general]
+        isRead:
+          type: boolean
+        referenceId:
+          type: ["string", "null"]
+        referenceType:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, title, message, type, isRead, createdAt]
+
+    NotificationListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    # ─── Feedback ───
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        serviceType:
+          type: string
+          enum: [complaint, tax, certificate, garbage, parking, transport, parks, libraries, general]
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: ["string", "null"]
+        sentiment:
+          type: ["string", "null"]
+          enum: [positive, neutral, negative]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, serviceType, rating, createdAt]
+
+    FeedbackInput:
+      type: object
+      properties:
+        serviceType:
+          type: string
+          enum: [complaint, tax, certificate, garbage, parking, transport, parks, libraries, general]
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+      required: [serviceType, rating]
+
+    FeedbackListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Feedback"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    FeedbackStats:
+      type: object
+      properties:
+        averageRating:
+          type: number
+        totalFeedback:
+          type: integer
+        positive:
+          type: integer
+        neutral:
+          type: integer
+        negative:
+          type: integer
+        ratingDistribution:
+          type: array
+          items:
+            $ref: "#/components/schemas/RatingCount"
+      required: [averageRating, totalFeedback, positive, neutral, negative, ratingDistribution]
+
+    RatingCount:
+      type: object
+      properties:
+        rating:
+          type: integer
+        count:
+          type: integer
+      required: [rating, count]
+
+    # ─── AI ───
+    ChatMessageInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+        sessionId:
+          type: ["string", "null"]
+      required: [message]
+
+    ChatResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+        sessionId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        suggestions:
+          type: array
+          items:
+            type: string
+      required: [id, message, sessionId, timestamp, suggestions]
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: string
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        sessionId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [id, role, content, sessionId, timestamp]
+
+    # ─── Departments ───
+    Department:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: ["string", "null"]
+        headName:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        phone:
+          type: ["string", "null"]
+        isActive:
+          type: boolean
+      required: [id, name, code, isActive]
+
+    # ─── Admin ───
+    CitizenListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserProfile"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    AuditLog:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: ["string", "null"]
+        action:
+          type: string
+        entity:
+          type: string
+        entityId:
+          type: ["string", "null"]
+        ipAddress:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
+        metadata:
+          type: ["string", "null"]
+          description: JSON-encoded metadata
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, action, entity, createdAt]
+
+    AuditLogListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+      required: [data, pagination]
+
+    RevenueReport:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        propertyTaxRevenue:
+          type: number
+        waterTaxRevenue:
+          type: number
+        parkingRevenue:
+          type: number
+        revenueByPeriod:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+        collectionRate:
+          type: number
+      required: [totalRevenue, propertyTaxRevenue, waterTaxRevenue, parkingRevenue, revenueByPeriod, collectionRate]
+
+    ServicesReport:
+      type: object
+      properties:
+        complaints:
+          $ref: "#/components/schemas/ComplaintStats"
+        certificates:
+          type: object
+          properties:
+            total:
+              type: integer
+            approved:
+              type: integer
+            pending:
+              type: integer
+            rejected:
+              type: integer
+          required: [total, approved, pending, rejected]
+        garbage:
+          type: object
+          properties:
+            total:
+              type: integer
+            completed:
+              type: integer
+            scheduled:
+              type: integer
+          required: [total, completed, scheduled]
+        parking:
+          type: object
+          properties:
+            totalReservations:
+              type: integer
+            activeNow:
+              type: integer
+            revenue:
+              type: number
+          required: [totalReservations, activeNow, revenue]
+      required: [complaints, certificates, garbage, parking]
