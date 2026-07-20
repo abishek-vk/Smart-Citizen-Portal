@@ -4,12 +4,16 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm run dev` — run the API server and citizen portal locally
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000 by default)
+- `pnpm --filter @workspace/citizen-portal run dev` — run the citizen portal (port 5173 by default)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` or `SUPABASE_DATABASE_URL` — Postgres connection string
+- Local frontend env: `VITE_API_BASE_URL` (defaults to `http://localhost:5000` in dev)
+- Auth envs still required for Clerk: `CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `VITE_CLERK_PUBLISHABLE_KEY`
 
 ## Stack
 
