@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import { ClerkProvider, SignIn, SignUp, Show, useClerk, useUser } from '@clerk/react';
 import { publishableKeyFromHost } from '@clerk/react/internal';
 import { shadcn } from '@clerk/themes';
@@ -36,6 +36,7 @@ import AdminAuditLogs from "@/pages/admin/audit-logs";
 
 import { MainLayout } from "@/components/layout/main-layout";
 import { useGetProfile } from "@workspace/api-client-react";
+import { AuthTokenSetup } from "@/components/auth-token-setup";
 
 import { getGetProfileQueryKey } from "@workspace/api-client-react";
 
@@ -43,10 +44,20 @@ const clerkPubKey = publishableKeyFromHost(
   window.location.hostname,
   import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
 );
-const clerkProxyUrl =
-  import.meta.env.VITE_CLERK_PROXY_URL?.trim() ||
-  (import.meta.env.DEV ? "https://frontend-api.clerk.dev" : undefined);
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL?.trim();
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+// Fallback UI while Clerk is loading
+function ClerkLoadingFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="animate-spin w-8 h-8 rounded-full border-2 border-primary border-t-transparent"></div>
+        <p className="text-muted-foreground">Loading authentication...</p>
+      </div>
+    </div>
+  );
+}
 
 function stripBase(path: string): string {
   return basePath && path.startsWith(basePath)
@@ -154,49 +165,53 @@ function ClerkProviderWithRoutes() {
       signUpUrl={`${basePath}/sign-up`}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+      fallback={<ClerkLoadingFallback />}
     >
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <ClerkQueryClientCacheInvalidator />
-          <Switch>
-            <Route path="/" component={HomeRedirect} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
-            
-            {/* Citizen Routes */}
-            <Route path="/dashboard"><ProtectedRoute component={CitizenDashboard} /></Route>
-            <Route path="/complaints"><ProtectedRoute component={Complaints} /></Route>
-            <Route path="/taxes"><ProtectedRoute component={Taxes} /></Route>
-            <Route path="/certificates"><ProtectedRoute component={Certificates} /></Route>
-            <Route path="/garbage"><ProtectedRoute component={Garbage} /></Route>
-            <Route path="/parking"><ProtectedRoute component={Parking} /></Route>
-            <Route path="/transport"><ProtectedRoute component={Transport} /></Route>
-            <Route path="/parks"><ProtectedRoute component={Parks} /></Route>
-            <Route path="/libraries"><ProtectedRoute component={Libraries} /></Route>
-            <Route path="/payments"><ProtectedRoute component={Payments} /></Route>
-            <Route path="/notifications"><ProtectedRoute component={Notifications} /></Route>
-            <Route path="/ai-assistant"><ProtectedRoute component={AIAssistant} /></Route>
-            <Route path="/feedback"><ProtectedRoute component={Feedback} /></Route>
+      <Suspense fallback={<ClerkLoadingFallback />}>
+        <AuthTokenSetup />
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+            <ClerkQueryClientCacheInvalidator />
+            <Switch>
+              <Route path="/" component={HomeRedirect} />
+              <Route path="/sign-in/*?" component={SignInPage} />
+              <Route path="/sign-up/*?" component={SignUpPage} />
+              
+              {/* Citizen Routes */}
+              <Route path="/dashboard"><ProtectedRoute component={CitizenDashboard} /></Route>
+              <Route path="/complaints"><ProtectedRoute component={Complaints} /></Route>
+              <Route path="/taxes"><ProtectedRoute component={Taxes} /></Route>
+              <Route path="/certificates"><ProtectedRoute component={Certificates} /></Route>
+              <Route path="/garbage"><ProtectedRoute component={Garbage} /></Route>
+              <Route path="/parking"><ProtectedRoute component={Parking} /></Route>
+              <Route path="/transport"><ProtectedRoute component={Transport} /></Route>
+              <Route path="/parks"><ProtectedRoute component={Parks} /></Route>
+              <Route path="/libraries"><ProtectedRoute component={Libraries} /></Route>
+              <Route path="/payments"><ProtectedRoute component={Payments} /></Route>
+              <Route path="/notifications"><ProtectedRoute component={Notifications} /></Route>
+              <Route path="/ai-assistant"><ProtectedRoute component={AIAssistant} /></Route>
+              <Route path="/feedback"><ProtectedRoute component={Feedback} /></Route>
 
-            {/* Admin Routes */}
-            <Route path="/admin"><ProtectedRoute component={AdminDashboard} adminOnly /></Route>
-            <Route path="/admin/complaints"><ProtectedRoute component={AdminComplaints} adminOnly /></Route>
-            <Route path="/admin/citizens"><ProtectedRoute component={AdminCitizens} adminOnly /></Route>
-            <Route path="/admin/certificates"><ProtectedRoute component={AdminCertificates} adminOnly /></Route>
-            <Route path="/admin/reports"><ProtectedRoute component={AdminReports} adminOnly /></Route>
-            <Route path="/admin/audit-logs"><ProtectedRoute component={AdminAuditLogs} adminOnly /></Route>
-            
-            <Route>
-              <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-                <h1 className="text-4xl font-bold font-serif mb-2">404</h1>
-                <p className="text-muted-foreground mb-4">Page not found</p>
-                <a href="/" className="text-primary hover:underline">Return home</a>
-              </div>
-            </Route>
-          </Switch>
-          <Toaster />
-        </ThemeProvider>
-      </QueryClientProvider>
+              {/* Admin Routes */}
+              <Route path="/admin"><ProtectedRoute component={AdminDashboard} adminOnly /></Route>
+              <Route path="/admin/complaints"><ProtectedRoute component={AdminComplaints} adminOnly /></Route>
+              <Route path="/admin/citizens"><ProtectedRoute component={AdminCitizens} adminOnly /></Route>
+              <Route path="/admin/certificates"><ProtectedRoute component={AdminCertificates} adminOnly /></Route>
+              <Route path="/admin/reports"><ProtectedRoute component={AdminReports} adminOnly /></Route>
+              <Route path="/admin/audit-logs"><ProtectedRoute component={AdminAuditLogs} adminOnly /></Route>
+              
+              <Route>
+                <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+                  <h1 className="text-4xl font-bold font-serif mb-2">404</h1>
+                  <p className="text-muted-foreground mb-4">Page not found</p>
+                  <a href="/" className="text-primary hover:underline">Return home</a>
+                </div>
+              </Route>
+            </Switch>
+            <Toaster />
+          </ThemeProvider>
+        </QueryClientProvider>
+      </Suspense>
     </ClerkProvider>
   );
 }

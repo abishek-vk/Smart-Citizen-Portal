@@ -4,9 +4,18 @@ import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const requireAuth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const auth = getAuth(req);
   const clerkId = auth?.userId;
+  
+  // In development, skip auth
+  if (isDev) {
+    (req as any).clerkId = clerkId || `dev-user-${Date.now()}`;
+    return next();
+  }
+  
   if (!clerkId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
@@ -19,6 +28,24 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
 export const ensureUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const auth = getAuth(req);
   const clerkId = auth?.userId;
+  
+  // In development, create a mock user
+  if (isDev) {
+    (req as any).user = {
+      id: 'dev-user-id',
+      clerkId: clerkId || 'dev-user',
+      email: 'dev@smartcity.local',
+      firstName: 'Dev',
+      lastName: 'User',
+      role: 'citizen',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
+    };
+    (req as any).clerkId = clerkId || 'dev-user';
+    return next();
+  }
+  
   if (!clerkId) {
     res.status(401).json({ error: "Unauthorized" });
     return;

@@ -2,12 +2,17 @@ import { createRoot } from 'react-dom/client';
 import { setBaseUrl } from '@workspace/api-client-react';
 
 import App from './App';
+import { ClerkErrorBoundary } from './components/clerk-error-boundary';
 
 import './index.css';
 
 setBaseUrl(
-	import.meta.env.VITE_API_BASE_URL?.trim() ||
-		(import.meta.env.DEV ? 'http://localhost:5000' : null),
+				import.meta.env.VITE_API_BASE_URL?.trim() ||
+								(import.meta.env.DEV ? 'http://localhost:5000' : null),
 );
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+  <ClerkErrorBoundary>
+    <App />
+  </ClerkErrorBoundary>
+);
