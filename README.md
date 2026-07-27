@@ -1,1 +1,1 @@
-Smart Citisen Portal
+Smart Citizen Portal
