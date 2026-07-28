@@ -83,6 +83,10 @@ const clerkAppearance = {
     cardBox: "bg-white dark:bg-slate-900 rounded-2xl w-[440px] max-w-full overflow-hidden border shadow-xl",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
+    socialButtonsBlockButtonText: "!font-semibold !text-slate-900 dark:!text-slate-100 !opacity-100",
+    socialButtonsBlockButton: "border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors",
+    footerPages: "!hidden",
+    devModeBadge: "!hidden",
   },
 };
 

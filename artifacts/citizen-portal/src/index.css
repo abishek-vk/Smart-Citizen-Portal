@@ -258,3 +258,24 @@
   .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate-2:not(.no-active-interaction-elevate)::after { inset: -1px; }
 }
+
+/* Clerk Customizations */
+.cl-footerPages,
+.cl-devModeBadge,
+.cl-logoBox,
+.cl-internal-phfx7i,
+.cl-internal-15btr7v,
+[class*="devModeBadge"],
+[class*="footerPages"] {
+  display: none !important;
+}
+
+.cl-socialButtonsBlockButtonText {
+  font-weight: 600 !important;
+  color: #0f172a !important;
+  opacity: 1 !important;
+}
+
+.dark .cl-socialButtonsBlockButtonText {
+  color: #f8fafc !important;
+}
