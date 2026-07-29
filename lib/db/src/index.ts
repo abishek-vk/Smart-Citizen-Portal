@@ -1,4 +1,8 @@
-import "dotenv/config";
+import path from "node:path";
+import dotenv from "dotenv";
+
+dotenv.config({ path: path.resolve(import.meta.dirname, "../../../.env") });
+dotenv.config();
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "./schema";
@@ -12,7 +16,12 @@ if (!databaseUrl) {
   );
 }
 
-export const pool = new Pool({ connectionString: databaseUrl });
+const cleanDatabaseUrl = databaseUrl.replace(/\?sslmode=.*$/, "");
+
+export const pool = new Pool({
+  connectionString: cleanDatabaseUrl,
+  ssl: { rejectUnauthorized: false },
+});
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

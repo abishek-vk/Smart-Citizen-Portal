@@ -33,7 +33,12 @@ router.post("/certificates", requireAuth, ensureUser, async (req, res): Promise<
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
   const [cert] = await db.insert(certificatesTable).values({
-    id: randomUUID(), userId: user.id, ...parsed.data, status: "pending",
+    id: randomUUID(),
+    userId: user.id,
+    ...parsed.data,
+    subjectDateOfBirth: parsed.data.subjectDateOfBirth ? (parsed.data.subjectDateOfBirth as any).toISOString().split("T")[0] : undefined,
+    subjectDateOfDeath: parsed.data.subjectDateOfDeath ? (parsed.data.subjectDateOfDeath as any).toISOString().split("T")[0] : undefined,
+    status: "pending",
   }).returning();
   res.status(201).json(cert);
 });

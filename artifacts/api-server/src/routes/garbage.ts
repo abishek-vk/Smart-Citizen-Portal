@@ -32,7 +32,11 @@ router.post("/garbage", requireAuth, ensureUser, async (req, res): Promise<void>
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
   const [req_] = await db.insert(garbageRequestsTable).values({
-    id: randomUUID(), userId: user.id, ...parsed.data, status: "scheduled",
+    id: randomUUID(),
+    userId: user.id,
+    ...parsed.data,
+    scheduledDate: parsed.data.scheduledDate ? (parsed.data.scheduledDate as any).toISOString().split("T")[0] : (parsed.data as any).scheduledDate,
+    status: "scheduled",
   }).returning();
   res.status(201).json(req_);
 });
