@@ -37,6 +37,7 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const citizenNavItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/profile", label: "My Profile", icon: UserIcon },
   { href: "/complaints", label: "Complaints", icon: AlertCircle },
   { href: "/taxes", label: "Taxes", icon: FileText },
   { href: "/certificates", label: "Certificates", icon: FileBadge },
@@ -166,14 +167,16 @@ export function Topbar({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
         </Link>
 
         <div className="flex items-center gap-3 pl-2 sm:pl-4 sm:border-l">
-          <div className="hidden sm:block text-right">
-            <p className="text-sm font-medium leading-none">{profile?.firstName || user?.firstName} {profile?.lastName || user?.lastName}</p>
-            <p className="text-xs text-muted-foreground mt-0.5">{profile?.role === 'admin' || profile?.role === 'super_admin' ? 'Administrator' : 'Citizen'}</p>
-          </div>
-          <Avatar className="h-9 w-9 border">
-            <AvatarImage src={profile?.avatarUrl || user?.imageUrl} alt="Avatar" />
-            <AvatarFallback><UserIcon className="w-4 h-4" /></AvatarFallback>
-          </Avatar>
+          <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div className="hidden sm:block text-right">
+              <p className="text-sm font-medium leading-none">{profile?.firstName || user?.firstName} {profile?.lastName || user?.lastName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{profile?.role === 'admin' || profile?.role === 'super_admin' ? 'Administrator' : 'Citizen'}</p>
+            </div>
+            <Avatar className="h-9 w-9 border">
+              <AvatarImage src={profile?.avatarUrl || user?.imageUrl} alt="Avatar" />
+              <AvatarFallback><UserIcon className="w-4 h-4" /></AvatarFallback>
+            </Avatar>
+          </Link>
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => signOut({ redirectUrl: basePath || "/" })}>
             <LogOut className="w-4 h-4" />
           </Button>

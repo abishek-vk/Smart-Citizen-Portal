@@ -25,6 +25,7 @@ import Payments from "@/pages/payments";
 import Notifications from "@/pages/notifications";
 import AIAssistant from "@/pages/ai-assistant";
 import Feedback from "@/pages/feedback";
+import ProfilePage from "@/pages/profile";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
@@ -190,6 +191,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/notifications"><ProtectedRoute component={Notifications} /></Route>
             <Route path="/ai-assistant"><ProtectedRoute component={AIAssistant} /></Route>
             <Route path="/feedback"><ProtectedRoute component={Feedback} /></Route>
+            <Route path="/profile"><ProtectedRoute component={ProfilePage} /></Route>
 
             {/* Admin Routes */}
             <Route path="/admin"><ProtectedRoute component={AdminDashboard} adminOnly /></Route>
