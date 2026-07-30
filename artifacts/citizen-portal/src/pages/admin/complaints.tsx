@@ -103,7 +103,7 @@ export default function AdminComplaints() {
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {complaint.location}</span>
                     <span>Reported: {format(new Date(complaint.createdAt), 'MMM d, h:mm a')}</span>
-                    <span className="capitalize">Category: {complaint.category.replace('_', ' ')}</span>
+                    <span className="capitalize">Category: {String(complaint.category || '').replace(/_/g, ' ')}</span>
                   </div>
 
                   {complaint.aiCategory && (

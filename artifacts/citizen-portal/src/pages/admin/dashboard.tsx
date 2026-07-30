@@ -137,7 +137,7 @@ export default function AdminDashboard() {
                   ))}
                 </Pie>
                 <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Legend verticalAlign="bottom" height={36} formatter={(value) => <span className="capitalize text-sm text-foreground">{value.replace('_', ' ')}</span>} />
+                <Legend verticalAlign="bottom" height={36} formatter={(value, entry: any) => <span className="capitalize text-sm text-foreground">{String(value || entry?.payload?.status || entry?.value || '').replace(/_/g, ' ')}</span>} />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -153,11 +153,11 @@ export default function AdminDashboard() {
               <BarChart data={data.revenueByType} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
-                <YAxis dataKey="type" type="category" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => v.replace('_', ' ')} width={100} className="capitalize" />
+                <YAxis dataKey="type" type="category" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => String(v || '').replace(/_/g, ' ')} width={100} className="capitalize" />
                 <RechartsTooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px' }}
                   formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                  labelFormatter={(v) => <span className="capitalize">{v.replace('_', ' ')}</span>}
+                  labelFormatter={(v) => <span className="capitalize">{String(v || '').replace(/_/g, ' ')}</span>}
                 />
                 <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={32}>
                   {data.revenueByType.map((entry, index) => (

@@ -112,16 +112,17 @@ function ClerkQueryClientCacheInvalidator() {
 }
 
 function HomeRedirect() {
-  return (
-    <>
-      <Show when="signed-in">
-        <Redirect to="/dashboard" />
-      </Show>
-      <Show when="signed-out">
-        <LandingPage />
-      </Show>
-    </>
-  );
+  const { isSignedIn } = useUser();
+  const { data: profile } = useGetProfile({ query: { enabled: !!isSignedIn, queryKey: getGetProfileQueryKey() } });
+
+  if (isSignedIn) {
+    if (profile?.role === 'admin' || profile?.role === 'super_admin') {
+      return <Redirect to="/admin" />;
+    }
+    return <Redirect to="/dashboard" />;
+  }
+
+  return <LandingPage />;
 }
 
 function ProtectedRoute({ component: Component, adminOnly = false }: { component: any, adminOnly?: boolean }) {

@@ -78,41 +78,18 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="h-16 flex items-center px-6 border-b">
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg tracking-tight font-serif text-primary">
+          <Link href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2 font-bold text-lg tracking-tight font-serif text-primary">
             <Building2 className="w-6 h-6" />
             <span>SmartCity</span>
           </Link>
         </div>
         
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
-          <div className="space-y-1">
-            <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Citizen Services</p>
-            {citizenNavItems.map((item) => {
-              const isActive = location === item.href
-              return (
-                <Link key={item.href} href={item.href} className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  isActive 
-                    ? "bg-primary/10 text-primary" 
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}>
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                  {item.badge && unreadCount?.count ? (
-                    <Badge variant="secondary" className="ml-auto bg-primary text-primary-foreground hover:bg-primary px-1.5 min-w-5 h-5 flex items-center justify-center text-[10px]">
-                      {unreadCount.count}
-                    </Badge>
-                  ) : null}
-                </Link>
-              )
-            })}
-          </div>
-
-          {isAdmin && (
-            <div className="space-y-1 pt-4 border-t">
+          {isAdmin ? (
+            <div className="space-y-1">
               <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 text-primary">Admin Panel</p>
               {adminNavItems.map((item) => {
-                const isActive = location === item.href || location.startsWith(item.href + '/')
+                const isActive = location === item.href || (item.href !== "/admin" && location.startsWith(item.href))
                 return (
                   <Link key={item.href} href={item.href} className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
@@ -122,6 +99,29 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
                   )}>
                     <item.icon className="w-4 h-4" />
                     <span>{item.label}</span>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Citizen Services</p>
+              {citizenNavItems.map((item) => {
+                const isActive = location === item.href
+                return (
+                  <Link key={item.href} href={item.href} className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    isActive 
+                      ? "bg-primary/10 text-primary" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}>
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                    {item.badge && unreadCount?.count ? (
+                      <Badge variant="secondary" className="ml-auto bg-primary text-primary-foreground hover:bg-primary px-1.5 min-w-5 h-5 flex items-center justify-center text-[10px]">
+                        {unreadCount.count}
+                      </Badge>
+                    ) : null}
                   </Link>
                 )
               })}
