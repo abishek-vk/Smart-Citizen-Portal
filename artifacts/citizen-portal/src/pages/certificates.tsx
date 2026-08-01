@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast"
 import { useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
-import { FileBadge, Plus, ScrollText, Loader2 } from "lucide-react"
+import { FileBadge, Plus, ScrollText, Loader2, Download } from "lucide-react"
 
 export default function Certificates() {
   const { data, isLoading } = useListCertificates()
@@ -38,6 +38,10 @@ export default function Certificates() {
     under_review: "bg-blue-100 text-blue-800",
     approved: "bg-emerald-100 text-emerald-800",
     rejected: "bg-destructive text-destructive-foreground"
+  }
+
+  const handleDownload = (certId: string) => {
+    window.open(`/api/certificates/${certId}/download`, '_blank')
   }
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -284,7 +288,9 @@ export default function Certificates() {
               </div>
               <div className="mt-auto pt-4 border-t">
                 {cert.status === 'approved' ? (
-                  <Button variant="outline" className="w-full">Download PDF</Button>
+                  <Button variant="outline" className="w-full" onClick={() => handleDownload(cert.id)}>
+                    <Download className="w-4 h-4 mr-2" /> Download Certificate
+                  </Button>
                 ) : (
                   <Button variant="ghost" className="w-full" disabled>Processing...</Button>
                 )}
