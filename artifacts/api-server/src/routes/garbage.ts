@@ -28,16 +28,25 @@ router.get("/garbage", requireAuth, ensureUser, async (req, res): Promise<void> 
 });
 
 router.post("/garbage", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const parsed = CreateGarbageRequestBody.safeParse(req.body);
+  const body = { ...req.body };
+  if (!body.notes) delete body.notes;
+
+  const parsed = CreateGarbageRequestBody.safeParse(body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
-  const [req_] = await db.insert(garbageRequestsTable).values({
+
+  const insertData: any = {
     id: randomUUID(),
     userId: user.id,
-    ...parsed.data,
-    scheduledDate: parsed.data.scheduledDate ? (parsed.data.scheduledDate as any).toISOString().split("T")[0] : (parsed.data as any).scheduledDate,
+    address: parsed.data.address,
+    wasteType: parsed.data.wasteType,
+    scheduledDate: parsed.data.scheduledDate ? new Date(parsed.data.scheduledDate).toISOString().split("T")[0] : null,
+    timeSlot: parsed.data.timeSlot,
+    notes: parsed.data.notes || null,
     status: "scheduled",
-  }).returning();
+  };
+
+  const [req_] = await db.insert(garbageRequestsTable).values(insertData).returning();
   res.status(201).json(req_);
 });
 

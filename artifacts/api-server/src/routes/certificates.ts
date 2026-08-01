@@ -29,17 +29,30 @@ router.get("/certificates", requireAuth, ensureUser, async (req, res): Promise<v
 });
 
 router.post("/certificates", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const parsed = ApplyCertificateBody.safeParse(req.body);
+  const body = { ...req.body };
+  if (!body.subjectDateOfBirth) delete body.subjectDateOfBirth;
+  if (!body.subjectDateOfDeath) delete body.subjectDateOfDeath;
+  if (!body.remarks) delete body.remarks;
+
+  const parsed = ApplyCertificateBody.safeParse(body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
-  const [cert] = await db.insert(certificatesTable).values({
+
+  const insertData: any = {
     id: randomUUID(),
     userId: user.id,
-    ...parsed.data,
-    subjectDateOfBirth: parsed.data.subjectDateOfBirth ? (parsed.data.subjectDateOfBirth as any).toISOString().split("T")[0] : undefined,
-    subjectDateOfDeath: parsed.data.subjectDateOfDeath ? (parsed.data.subjectDateOfDeath as any).toISOString().split("T")[0] : undefined,
+    type: parsed.data.type,
+    applicantName: parsed.data.applicantName,
+    applicantRelation: parsed.data.applicantRelation,
+    subjectName: parsed.data.subjectName,
+    placeOfEvent: parsed.data.placeOfEvent,
+    remarks: parsed.data.remarks || null,
     status: "pending",
-  }).returning();
+    subjectDateOfBirth: parsed.data.subjectDateOfBirth ? new Date(parsed.data.subjectDateOfBirth).toISOString().split("T")[0] : null,
+    subjectDateOfDeath: parsed.data.subjectDateOfDeath ? new Date(parsed.data.subjectDateOfDeath).toISOString().split("T")[0] : null,
+  };
+
+  const [cert] = await db.insert(certificatesTable).values(insertData).returning();
   res.status(201).json(cert);
 });
 
