@@ -73,7 +73,7 @@ export default function AIAssistant() {
   return (
     <div className="h-[calc(100dvh-8rem)] flex flex-col">
       <PageHeader 
-        title="Civic AI Assistant" 
+        title="Karen" 
         description="Ask questions, find services, or get help navigating the portal."
       >
         <Button variant="outline" size="sm" onClick={handleClear} disabled={clearMutation.isPending || history?.length === 0}>
@@ -94,8 +94,8 @@ export default function AIAssistant() {
               <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
                 <Sparkles className="w-8 h-8 text-primary" />
               </div>
-              <h3 className="text-xl font-bold font-serif mb-2">How can I help you today?</h3>
-              <p className="text-muted-foreground mb-8">I'm your digital civic assistant. I can help you find information, navigate services, or answer questions about the city.</p>
+              <h3 className="text-xl font-bold font-serif mb-2">Hi, I'm Karen! How can I help you?</h3>
+              <p className="text-muted-foreground mb-8">I'm your Smart City AI Assistant. I can help you find information, navigate services, or answer questions about the city.</p>
               
               <div className="flex flex-wrap justify-center gap-2">
                 {suggestions.map((sug, i) => (

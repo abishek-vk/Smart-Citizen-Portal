@@ -48,7 +48,7 @@ const citizenNavItems = [
   { href: "/libraries", label: "Libraries", icon: Library },
   { href: "/payments", label: "Payments", icon: CreditCard },
   { href: "/notifications", label: "Notifications", icon: Bell, badge: true },
-  { href: "/ai-assistant", label: "AI Assistant", icon: MessageSquare },
+  { href: "/ai-assistant", label: "Karen", icon: MessageSquare },
   { href: "/feedback", label: "Feedback", icon: Star },
 ]
 

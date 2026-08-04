@@ -38,7 +38,7 @@ tags:
   - name: feedback
     description: Citizen feedback
   - name: ai
-    description: AI assistant and analysis
+    description: Karen AI assistant and analysis
   - name: departments
     description: City departments
   - name: admin

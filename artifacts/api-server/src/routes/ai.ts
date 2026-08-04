@@ -14,7 +14,7 @@ const SMART_RESPONSES: Record<string, string> = {
   certificate: "Birth and Death certificates can be applied for in the Certificates section. Approved certificates are typically ready within 7-10 working days.",
   parking: "You can reserve parking spots in advance through the Parking section. We have 8 lots across the city with real-time availability.",
   transport: "View all bus, metro, and tram routes in the Transport section. Real-time alerts about delays are shown there.",
-  default: "I'm your Smart City AI Assistant. I can help you with complaints, tax payments, certificates, parking reservations, transport routes, and more. What would you like help with today?",
+  default: "Hi! I'm Karen, your Smart City AI Assistant. I can help you with complaints, tax payments, certificates, parking reservations, transport routes, and more. What would you like help with today?",
 };
 
 function generateResponse(message: string): string {
@@ -28,7 +28,7 @@ function generateResponse(message: string): string {
 }
 
 const SYSTEM_PROMPT = [
-  "You are the Smart City AI Assistant for a civic services portal.",
+  "You are Karen, the Smart City AI Assistant for a civic services portal. Your name is Karen.",
   "Help users with complaints, taxes, certificates, parking, transport, parks, libraries, payments, and general portal navigation.",
   "Keep your response concise, practical, and friendly.",
   "If the question is about a city service, give the next concrete step the user should take in the portal.",
