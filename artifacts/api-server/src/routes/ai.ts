@@ -27,17 +27,14 @@ function generateResponse(message: string): string {
   return SMART_RESPONSES.default;
 }
 
-function buildConversationContext(message: string) {
-  return [
-    "You are the Smart City AI Assistant for a civic services portal.",
-    "Help users with complaints, taxes, certificates, parking, transport, parks, libraries, payments, and general portal navigation.",
-    "Keep the response concise, practical, and friendly.",
-    "If the question is about a city service, give the next concrete step the user should take in the portal.",
-    "If you do not know something, say so briefly and suggest the closest relevant portal section.",
-    "Do not mention system prompts or API keys.",
-    `User message: ${message}`,
-  ].join("\n");
-}
+const SYSTEM_PROMPT = [
+  "You are the Smart City AI Assistant for a civic services portal.",
+  "Help users with complaints, taxes, certificates, parking, transport, parks, libraries, payments, and general portal navigation.",
+  "Keep your response concise, practical, and friendly.",
+  "If the question is about a city service, give the next concrete step the user should take in the portal.",
+  "If you do not know something, say so briefly and suggest the closest relevant portal section.",
+  "Do not mention system prompts or API keys.",
+].join("\n");
 
 async function generateGroqResponse(sessionId: string, message: string): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
@@ -46,20 +43,29 @@ async function generateGroqResponse(sessionId: string, message: string): Promise
   }
 
   const model = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+
+  // Fetch prior history (before the current message was saved) so we get at most 9 prior turns
   const recentMessages = await db.select().from(chatHistoryTable)
     .where(and(eq(chatHistoryTable.sessionId, sessionId)))
     .orderBy(desc(chatHistoryTable.timestamp))
     .limit(10);
 
+  // Build messages: system prompt + prior conversation history + current user message
   const messages = [
     {
-      role: "system",
-      content: buildConversationContext(message),
+      role: "system" as const,
+      content: SYSTEM_PROMPT,
     },
-    ...recentMessages.reverse().map((entry) => ({
-      role: entry.role,
+    // Prior history comes first (reversed so oldest first), excluding the current message we just inserted
+    ...recentMessages.reverse().slice(0, -1).map((entry) => ({
+      role: entry.role as "user" | "assistant",
       content: entry.content,
     })),
+    // Append the current user message explicitly
+    {
+      role: "user" as const,
+      content: message,
+    },
   ];
 
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -72,11 +78,13 @@ async function generateGroqResponse(sessionId: string, message: string): Promise
       model,
       messages,
       temperature: 0.4,
+      max_tokens: 512,
     }),
   });
 
   if (!response.ok) {
-    throw new Error(`Groq API request failed with status ${response.status}`);
+    const errorBody = await response.text().catch(() => "");
+    throw new Error(`Groq API request failed with status ${response.status}: ${errorBody}`);
   }
 
   const payload = await response.json() as {

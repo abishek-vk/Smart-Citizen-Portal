@@ -11,12 +11,20 @@ import { cn } from "@/lib/utils"
 
 export default function AIAssistant() {
   const [input, setInput] = useState("")
+  const [sessionId, setSessionId] = useState<string | undefined>(undefined)
   const scrollRef = useRef<HTMLDivElement>(null)
   
   const { data: history, isLoading } = useGetChatHistory()
   const sendMutation = useSendChatMessage()
   const clearMutation = useClearChatHistory()
   const queryClient = useQueryClient()
+
+  // Restore sessionId from existing history on first load
+  useEffect(() => {
+    if (history && history.length > 0 && !sessionId) {
+      setSessionId(history[history.length - 1].sessionId)
+    }
+  }, [history, sessionId])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -25,24 +33,31 @@ export default function AIAssistant() {
     }
   }, [history])
 
-  const handleSend = (e?: React.FormEvent) => {
-    e?.preventDefault()
-    if (!input.trim()) return
-
-    const message = input
-    setInput("")
-
-    // Optimistically update UI (simplified, relies on refetch for now)
-    sendMutation.mutate({ data: { message } }, {
-      onSuccess: () => {
+  const sendMessage = (message: string) => {
+    if (!message.trim() || sendMutation.isPending) return
+    sendMutation.mutate({ data: { message, sessionId } }, {
+      onSuccess: (response) => {
+        // Persist the sessionId returned by the server
+        if (response?.sessionId) {
+          setSessionId(response.sessionId)
+        }
         queryClient.invalidateQueries({ queryKey: getGetChatHistoryQueryKey() })
       }
     })
   }
 
+  const handleSend = (e?: React.FormEvent) => {
+    e?.preventDefault()
+    if (!input.trim()) return
+    const message = input
+    setInput("")
+    sendMessage(message)
+  }
+
   const handleClear = () => {
     clearMutation.mutate(undefined, {
       onSuccess: () => {
+        setSessionId(undefined)
         queryClient.invalidateQueries({ queryKey: getGetChatHistoryQueryKey() })
       }
     })
@@ -84,7 +99,7 @@ export default function AIAssistant() {
               
               <div className="flex flex-wrap justify-center gap-2">
                 {suggestions.map((sug, i) => (
-                  <BadgeButton key={i} onClick={() => setInput(sug)}>{sug}</BadgeButton>
+                  <BadgeButton key={i} onClick={() => sendMessage(sug)}>{sug}</BadgeButton>
                 ))}
               </div>
             </div>
