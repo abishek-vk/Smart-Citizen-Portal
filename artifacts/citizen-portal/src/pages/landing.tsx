@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Link } from "wouter"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitcher } from "@/components/language-provider"
 
 /* ─── Data ──────────────────────────────────────────────────────────────── */
 
@@ -154,6 +155,7 @@ export default function LandingPage() {
           <a href="#testimonials" className="hover:text-foreground transition-colors">Testimonials</a>
         </nav>
         <div className="flex items-center gap-4">
+          <LanguageSwitcher className="hidden sm:flex" />
           <Link href="/sign-in" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sign In</Link>
           <Button asChild>
             <Link href="/sign-up">Get Started</Link>

@@ -94,6 +94,20 @@ function generateResponse(message: string): string {
   return SMART_RESPONSES.default;
 }
 
+function generateTamilResponse(message: string): string {
+  const lowerMsg = message.toLowerCase();
+  if (lowerMsg.includes("complaint") || lowerMsg.includes("issue") || lowerMsg.includes("problem")) {
+    return "## படிகள்\n\n1. உங்கள் டாஷ்போர்டில் **புகார்கள்** பகுதியைத் திறக்கவும்.\n2. **புதிய புகார்** என்பதைத் தேர்ந்தெடுக்கவும்.\n3. பிரச்சினையின் வகை மற்றும் இடத்தை உள்ளிடவும்.\n4. புகாரைச் சமர்ப்பித்து, கிடைக்கும் புகார் எண்ணைச் சேமிக்கவும்.\n\n## குறிப்புகள்\n\nஉங்கள் புகாரின் நிலை **அறிவிப்புகள்** பகுதியில் காண்பிக்கப்படும்.";
+  }
+  if (lowerMsg.includes("tax") || lowerMsg.includes("payment") || lowerMsg.includes("bill")) {
+    return "## படிகள்\n\n1. டாஷ்போர்டில் உள்ள **வரிகள்** பகுதியைத் திறக்கவும்.\n2. நிலுவையிலுள்ள வரித் தொகை மற்றும் கடைசி தேதியைப் பார்க்கவும்.\n3. **இப்போது செலுத்தவும்** என்பதைத் தேர்ந்தெடுக்கவும்.\n4. கட்டணத்தை முடித்து ரசீதைப் பதிவிறக்கவும்.\n\n## குறிப்புகள்\n\nதாமதமான கட்டணங்களுக்கு மாதத்திற்கு **2% அபராதம்** விதிக்கப்படும்.";
+  }
+  if (lowerMsg.includes("certificate") || lowerMsg.includes("birth") || lowerMsg.includes("death")) {
+    return "## படிகள்\n\n1. **சான்றிதழ்கள்** பகுதியைத் திறக்கவும்.\n2. தேவையான பிறப்பு அல்லது இறப்பு சான்றிதழைத் தேர்ந்தெடுக்கவும்.\n3. விவரங்களை நிரப்பி ஆதார ஆவணங்களைப் பதிவேற்றவும்.\n4. விண்ணப்பத்தைச் சமர்ப்பிக்கவும்.\n\n## குறிப்புகள்\n\nஒப்புதல் பெற்ற சான்றிதழ்கள் பொதுவாக **7–10 வேலை நாட்களில்** தயாராகும்.";
+  }
+  return "வணக்கம்! நான் உங்கள் ஸ்மார்ட் சிட்டி AI உதவியாளர் கேரன். புகார்கள், வரிகள், சான்றிதழ்கள், வாகன நிறுத்தம் மற்றும் போக்குவரத்து தொடர்பாக உதவ முடியும். எப்படி உதவலாம்?";
+}
+
 const SYSTEM_PROMPT = [
   "You are Karen, the Smart City AI Assistant for a civic services portal. Your name is Karen.",
   "Help users with complaints, taxes, certificates, parking, transport, parks, libraries, payments, and general portal navigation.",
@@ -116,7 +130,7 @@ const SYSTEM_PROMPT = [
   "Always prioritize clarity, readability, and logical sequencing.",
 ].join("\n");
 
-async function generateGroqResponse(sessionId: string, message: string): Promise<string> {
+async function generateGroqResponse(sessionId: string, message: string, language: "en" | "ta"): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return generateResponse(message);
@@ -134,7 +148,7 @@ async function generateGroqResponse(sessionId: string, message: string): Promise
   const messages = [
     {
       role: "system" as const,
-      content: SYSTEM_PROMPT,
+      content: `${SYSTEM_PROMPT}\n\nThe user's selected language is ${language === "ta" ? "Tamil" : "English"}. Respond entirely in ${language === "ta" ? "Tamil" : "English"}, including headings and notes.`,
     },
     // Prior history comes first (reversed so oldest first), excluding the current message we just inserted
     ...recentMessages.reverse().slice(0, -1).map((entry) => ({
@@ -191,9 +205,12 @@ router.post("/ai/chat", requireAuth, ensureUser, async (req, res): Promise<void>
     content: parsed.data.message, sessionId, timestamp: new Date(),
   });
 
-  let responseText = generateResponse(parsed.data.message);
+  const language = parsed.data.language ?? "en";
+  let responseText = language === "ta"
+    ? generateTamilResponse(parsed.data.message)
+    : generateResponse(parsed.data.message);
   try {
-    responseText = await generateGroqResponse(sessionId, parsed.data.message);
+    responseText = await generateGroqResponse(sessionId, parsed.data.message, language);
   } catch {
     // Fall back to the existing local assistant response when the remote API is unavailable.
   }

@@ -1,4 +1,5 @@
 import { SignIn } from "@clerk/react";
+import { LanguageSwitcher } from "@/components/language-provider";
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -6,6 +7,7 @@ export default function SignInPage() {
   return (
     <div className="flex min-h-[100dvh] items-center justify-center bg-background px-4 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-900/[0.04] [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]" />
+      <LanguageSwitcher className="absolute right-4 top-4 z-20" />
       <div className="relative z-10 w-full max-w-md">
         <SignIn routing="path" path={`${basePath}/sign-in`} signUpUrl={`${basePath}/sign-up`} />
       </div>
