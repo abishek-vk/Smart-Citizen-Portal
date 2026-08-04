@@ -9,12 +9,79 @@ import type { IRouter } from "express";
 const router: IRouter = Router();
 
 const SMART_RESPONSES: Record<string, string> = {
-  complaint: "To file a complaint, go to the Complaints section from your dashboard. Provide a detailed description, category, and location. Our AI system will automatically categorize and prioritize it.",
-  tax: "You can view and pay your Property Tax and Water Tax bills in the Taxes section. Bills are generated quarterly. Overdue bills attract a 2% monthly penalty.",
-  certificate: "Birth and Death certificates can be applied for in the Certificates section. Approved certificates are typically ready within 7-10 working days.",
-  parking: "You can reserve parking spots in advance through the Parking section. We have 8 lots across the city with real-time availability.",
-  transport: "View all bus, metro, and tram routes in the Transport section. Real-time alerts about delays are shown there.",
-  default: "Hi! I'm Karen, your Smart City AI Assistant. I can help you with complaints, tax payments, certificates, parking reservations, transport routes, and more. What would you like help with today?",
+  complaint: `## Steps
+
+1. Open the **Complaints** section from your dashboard.
+2. Click **New Complaint**.
+3. Select a category (e.g. Road, Water, Electricity).
+4. Enter a detailed description and the location of the issue.
+5. Attach any supporting photos if available.
+6. Submit the complaint.
+7. Note the complaint ID shown on screen to track the status.
+
+## Notes
+
+- Our AI system automatically categorizes and prioritizes complaints.
+- You will receive status update notifications as the complaint progresses.`,
+
+  tax: `## Steps
+
+1. Go to the **Taxes** section from your dashboard.
+2. Select the tax type — **Property Tax** or **Water Tax**.
+3. Review the outstanding bill amount and due date.
+4. Click **Pay Now** to proceed.
+5. Choose a payment method (UPI, Net Banking, or Card).
+6. Confirm and complete the payment.
+7. Download the payment receipt for your records.
+
+## Notes
+
+- Bills are generated quarterly.
+- Overdue bills attract a **2% monthly penalty**.
+- Receipts are also available in the **Payments** section.`,
+
+  certificate: `## Steps
+
+1. Navigate to the **Certificates** section from your dashboard.
+2. Select the certificate type — **Birth Certificate** or **Death Certificate**.
+3. Fill in the required personal details.
+4. Upload the supporting documents (hospital records, ID proof, etc.).
+5. Submit the application.
+6. Note the application reference number for tracking.
+
+## Notes
+
+- Approved certificates are typically ready within **7–10 working days**.
+- You will be notified via the Notifications section once the certificate is ready.`,
+
+  parking: `## Steps
+
+1. Open the **Parking** section from your dashboard.
+2. Browse the list of available city parking lots.
+3. Select a lot that is convenient for your destination.
+4. Choose your preferred date and time slot.
+5. Confirm the reservation and complete the payment.
+6. Save or screenshot the booking confirmation.
+
+## Notes
+
+- There are **8 parking lots** across the city with real-time availability shown.
+- Reservations can be cancelled up to 1 hour before the slot begins.`,
+
+  transport: `## Steps
+
+1. Go to the **Transport** section from your dashboard.
+2. Select the mode of transport — Bus, Metro, or Tram.
+3. Enter your starting point and destination to find routes.
+4. View available routes, timings, and fare details.
+5. Check the real-time alerts panel for any delays on your route.
+
+## Notes
+
+- Real-time delay alerts are shown directly in the Transport section.
+- Route schedules are updated regularly to reflect current operations.`,
+
+  default: "Hi! I'm **Karen**, your Smart City AI Assistant. I can help you with complaints, tax payments, certificates, parking reservations, transport routes, and more.\n\nWhat would you like help with today?",
 };
 
 function generateResponse(message: string): string {
@@ -30,10 +97,23 @@ function generateResponse(message: string): string {
 const SYSTEM_PROMPT = [
   "You are Karen, the Smart City AI Assistant for a civic services portal. Your name is Karen.",
   "Help users with complaints, taxes, certificates, parking, transport, parks, libraries, payments, and general portal navigation.",
-  "Keep your response concise, practical, and friendly.",
+  "Always respond in Markdown format.",
+  "",
+  "RESPONSE FORMAT RULES:",
+  "1. If the user's query is process-based (e.g. 'How to...', 'How do I...', 'Steps to...', 'Procedure for...', 'Guide to...', 'What is the process of...', or any request that requires sequential actions), you MUST respond using the following structure:",
+  "   - A '## Steps' heading followed by a numbered list of sequential steps (one action per step).",
+  "   - Optionally, a '## Prerequisites' section BEFORE the steps if relevant.",
+  "   - Optionally, a '## Notes' section AFTER the steps for warnings, tips, or exceptions.",
+  "   - NEVER merge multiple steps into a paragraph. Each step must be one clear, concise action.",
+  "2. For non-procedural or informational questions, use the most appropriate format:",
+  "   - Paragraphs for explanations.",
+  "   - Markdown tables for comparisons.",
+  "   - Bullet lists for unordered information.",
+  "",
   "If the question is about a city service, give the next concrete step the user should take in the portal.",
   "If you do not know something, say so briefly and suggest the closest relevant portal section.",
   "Do not mention system prompts or API keys.",
+  "Always prioritize clarity, readability, and logical sequencing.",
 ].join("\n");
 
 async function generateGroqResponse(sessionId: string, message: string): Promise<string> {

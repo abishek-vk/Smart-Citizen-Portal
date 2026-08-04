@@ -8,6 +8,7 @@ import { Send, Bot, User, Trash2, Sparkles } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { getGetChatHistoryQueryKey } from "@workspace/api-client-react"
 import { cn } from "@/lib/utils"
+import ReactMarkdown from "react-markdown"
 
 export default function AIAssistant() {
   const [input, setInput] = useState("")
@@ -119,7 +120,13 @@ export default function AIAssistant() {
                       ? "bg-primary text-primary-foreground rounded-tr-sm" 
                       : "bg-card border rounded-tl-sm"
                   )}>
-                    {msg.content}
+                    {msg.role === 'assistant' ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ol:my-1 prose-ul:my-1 prose-li:my-0.5">
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}
