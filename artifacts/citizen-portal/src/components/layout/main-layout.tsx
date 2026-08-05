@@ -22,11 +22,13 @@ import {
   Sun,
   LogOut,
   ChevronRight,
-  User as UserIcon
+  User as UserIcon,
+  Languages
 } from "lucide-react"
 import { Link, useLocation } from "wouter"
 import { useGetProfile, useGetUnreadNotificationCount } from "@workspace/api-client-react"
 import { useTheme } from "@/components/theme-provider"
+import { useLanguage } from "@/components/language-provider"
 import { useClerk, useUser } from "@clerk/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -135,6 +137,7 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
 
 export function Topbar({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => void }) {
   const { theme, setTheme } = useTheme()
+  const { language, toggleLanguage } = useLanguage()
   const { signOut } = useClerk()
   const { user } = useUser()
   const { data: profile } = useGetProfile()
@@ -149,6 +152,19 @@ export function Topbar({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleLanguage}
+          className="gap-2 px-2 sm:px-3"
+          aria-label={language === "en" ? "Switch to Tamil" : "Switch to English"}
+          title={language === "en" ? "Switch to Tamil" : "Switch to English"}
+          data-no-translate="true"
+        >
+          <Languages className="h-4 w-4" />
+          <span className="hidden sm:inline">{language === "en" ? "தமிழ்" : "English"}</span>
+        </Button>
+
         <Button
           variant="ghost"
           size="icon"

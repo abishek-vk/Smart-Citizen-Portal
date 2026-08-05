@@ -8,11 +8,13 @@ import { Send, Bot, User, Trash2, Sparkles } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { getGetChatHistoryQueryKey } from "@workspace/api-client-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/components/language-provider"
 import ReactMarkdown from "react-markdown"
 
 export default function AIAssistant() {
   const [input, setInput] = useState("")
   const [sessionId, setSessionId] = useState<string | undefined>(undefined)
+  const { language } = useLanguage()
   const scrollRef = useRef<HTMLDivElement>(null)
   
   const { data: history, isLoading } = useGetChatHistory()
@@ -36,7 +38,7 @@ export default function AIAssistant() {
 
   const sendMessage = (message: string) => {
     if (!message.trim() || sendMutation.isPending) return
-    sendMutation.mutate({ data: { message, sessionId } }, {
+    sendMutation.mutate({ data: { message, sessionId, language } }, {
       onSuccess: (response) => {
         // Persist the sessionId returned by the server
         if (response?.sessionId) {

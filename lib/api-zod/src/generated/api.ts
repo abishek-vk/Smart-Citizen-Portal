@@ -1529,7 +1529,8 @@ export const GetFeedbackStatsResponse = zod.object({
 
 export const SendChatMessageBody = zod.object({
   "message": zod.string().min(1),
-  "sessionId": zod.string().nullish()
+  "sessionId": zod.string().nullish(),
+  "language": zod.enum(["en", "ta"]).default("en")
 })
 
 export const SendChatMessageResponse = zod.object({
