@@ -33,8 +33,8 @@ export function LiveCityMap({
   onSelectMarker,
   onBookSpot,
   height = "380px",
-  center = [40.7128, -74.006],
-  zoom = 14,
+  center = [11.0168, 76.9558],
+  zoom = 13,
   title = "Live City Map — Real-Time Locations",
 }: LiveCityMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)

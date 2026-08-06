@@ -229,11 +229,11 @@ INSERT INTO citizens (
     '9876543210',
     'asha.kumar@example.com',
     'pbkdf2_sha256$placeholder',
-    '12, MG Road',
-    'Bangalore',
-    'Bangalore Urban',
-    'Karnataka',
-    '560001',
+    '12, Cross Cut Road, Gandhipuram',
+    'Coimbatore',
+    'Coimbatore',
+    'Tamil Nadu',
+    '641012',
     TRUE
 ) ON CONFLICT (aadhaar_number) DO NOTHING;
 
@@ -248,7 +248,7 @@ INSERT INTO admins (name, email, password_hash, role) VALUES (
 
 -- Citizen Registration
 -- INSERT INTO citizens (aadhaar_number, full_name, date_of_birth, gender, mobile_number, email, password_hash, address, city, district, state, pincode)
--- VALUES ('123456789013', 'Ravi Sharma', '1988-11-20', 'Male', '9876543211', 'ravi@example.com', 'pbkdf2_sha256$hash', '45, Main Street', 'Hyderabad', 'Hyderabad', 'Telangana', '500001');
+-- VALUES ('123456789013', 'Ravi Sharma', '1988-11-20', 'Male', '9876543211', 'ravi@example.com', 'pbkdf2_sha256$hash', '45, Main Street', 'Coimbatore', 'Coimbatore', 'Tamil Nadu', '641001');
 
 -- Citizen Login (Aadhaar + Password only)
 SELECT user_id, aadhaar_number, full_name, is_verified
@@ -271,7 +271,7 @@ VALUES (
     'Large pothole causing traffic issues near the school entrance.',
     'High',
     'Pending',
-    'MG Road, Bangalore'
+    'Cross Cut Road, Gandhipuram, Coimbatore'
 );
 
 -- Update Complaint Status
