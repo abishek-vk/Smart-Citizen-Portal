@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
+import { LanguageProvider } from "@/components/language-provider"
 
 // Pages
 import LandingPage from "@/pages/landing";
@@ -172,7 +173,8 @@ function ClerkProviderWithRoutes() {
       <ClerkAuthTokenSync />
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <ClerkQueryClientCacheInvalidator />
+          <LanguageProvider>
+            <ClerkQueryClientCacheInvalidator />
           <Switch>
             <Route path="/" component={HomeRedirect} />
             <Route path="/sign-in/*?" component={SignInPage} />
@@ -210,7 +212,8 @@ function ClerkProviderWithRoutes() {
               </div>
             </Route>
           </Switch>
-          <Toaster />
+            <Toaster />
+          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ClerkProvider>

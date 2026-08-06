@@ -924,6 +924,7 @@ export interface ChatMessageInput {
   message: string;
   /** @nullable */
   sessionId?: string | null;
+  language?: 'en' | 'ta';
 }
 
 export interface ChatResponse {
