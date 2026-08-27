@@ -27,7 +27,6 @@ router.get("/certificates", requireAuth, ensureUser, async (req, res): Promise<v
   const data = await db.select().from(certificatesTable).where(where).orderBy(desc(certificatesTable.createdAt)).limit(limit).offset(offset);
   res.json({ data, pagination: { total: Number(total), page, limit, totalPages: Math.ceil(Number(total) / limit) } });
 });
-
 router.post("/certificates", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const body = { ...req.body };
   if (!body.subjectDateOfBirth) delete body.subjectDateOfBirth;
