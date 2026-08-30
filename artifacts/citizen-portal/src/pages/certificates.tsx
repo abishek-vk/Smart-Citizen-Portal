@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { PageHeader } from "@/components/layout/main-layout"
 import { useListCertificates, useApplyCertificate, getListCertificatesQueryKey, useGetProfile } from "@workspace/api-client-react"
+import { getApiUrl } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,7 +42,7 @@ export default function Certificates() {
   }
 
   const handleDownload = (certId: string) => {
-    window.open(`/api/certificates/${certId}/download`, '_blank')
+    window.open(getApiUrl(`/api/certificates/${certId}/download`), '_blank')
   }
 
   const handleOpenChange = (isOpen: boolean) => {

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react"
 import { useListPropertyTaxes, useListWaterTaxes, useGetTaxSummary, usePayPropertyTax, usePayWaterTax } from "@workspace/api-client-react"
+import { customFetch } from "@/lib/api"
 import { PageHeader } from "@/components/layout/main-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -447,7 +448,7 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
   const handleCreateProperty = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/taxes/property', {
+      await customFetch('/api/taxes/property', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -457,7 +458,6 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
           areaSqFt: area,
         })
       })
-      if (!res.ok) throw new Error("Failed to register property")
       toast({ title: "Property Registered", description: "New property tax assessment bill added to your account." })
       setOpen(false)
       onRefresh()
@@ -471,7 +471,7 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
   const handleCreateWater = async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/taxes/water', {
+      await customFetch('/api/taxes/water', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -480,7 +480,6 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
           unitsConsumed: units,
         })
       })
-      if (!res.ok) throw new Error("Failed to link water connection")
       toast({ title: "Water Connection Linked", description: "Water service bill generated for your account." })
       setOpen(false)
       onRefresh()
@@ -610,8 +609,7 @@ export default function Taxes() {
   const handleResetSampleData = async () => {
     setIsResetting(true)
     try {
-      const res = await fetch('/api/taxes/seed-sample', { method: 'POST' })
-      if (!res.ok) throw new Error("Failed")
+      await customFetch('/api/taxes/seed-sample', { method: 'POST' })
       toast({ title: "Sample Data Reset", description: "Populated property and water tax sample bills." })
       queryClient.invalidateQueries({ queryKey: getListPropertyTaxesQueryKey() })
       queryClient.invalidateQueries({ queryKey: getListWaterTaxesQueryKey() })
