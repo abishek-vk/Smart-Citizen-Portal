@@ -8,9 +8,9 @@ import {
 } from "@workspace/api-zod";
 import { randomUUID } from "crypto";
 import type { IRouter } from "express";
-
+                                                      
 const router: IRouter = Router();
-
+                        
 router.get("/certificates", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const user = (req as any).user;
   const params = ListCertificatesQueryParams.safeParse(req.query);
@@ -27,17 +27,17 @@ router.get("/certificates", requireAuth, ensureUser, async (req, res): Promise<v
   const data = await db.select().from(certificatesTable).where(where).orderBy(desc(certificatesTable.createdAt)).limit(limit).offset(offset);
   res.json({ data, pagination: { total: Number(total), page, limit, totalPages: Math.ceil(Number(total) / limit) } });
 });
-
+                                
 router.post("/certificates", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const body = { ...req.body };
   if (!body.subjectDateOfBirth) delete body.subjectDateOfBirth;
   if (!body.subjectDateOfDeath) delete body.subjectDateOfDeath;
   if (!body.remarks) delete body.remarks;
-
+                                
   const parsed = ApplyCertificateBody.safeParse(body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
-
+                                      
   const insertData: any = {
     id: randomUUID(),
     userId: user.id,
@@ -51,11 +51,11 @@ router.post("/certificates", requireAuth, ensureUser, async (req, res): Promise<
     subjectDateOfBirth: parsed.data.subjectDateOfBirth ? new Date(parsed.data.subjectDateOfBirth).toISOString().split("T")[0] : null,
     subjectDateOfDeath: parsed.data.subjectDateOfDeath ? new Date(parsed.data.subjectDateOfDeath).toISOString().split("T")[0] : null,
   };
-
+                
   const [cert] = await db.insert(certificatesTable).values(insertData).returning();
   res.status(201).json(cert);
 });
-
+                      
 router.get("/certificates/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const params = GetCertificateParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
@@ -93,11 +93,11 @@ router.get("/certificates/:id/download", requireAuth, ensureUser, async (req, re
     res.status(400).send("Certificate is not approved yet.");
     return;
   }
-
+                                                   
   const title = cert.type === "birth" ? "OFFICIAL BIRTH CERTIFICATE" : "OFFICIAL DEATH CERTIFICATE";
   const certNo = cert.certificateNumber || `CERT-${cert.id.slice(0, 8).toUpperCase()}`;
   const eventDateStr = cert.subjectDateOfBirth || cert.subjectDateOfDeath || "N/A";
-
+                                              
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
