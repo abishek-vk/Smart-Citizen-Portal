@@ -1,4 +1,5 @@
 import path from "node:path";
+import dns from "node:dns";
 import dotenv from "dotenv";
 
 dotenv.config({ path: path.resolve(import.meta.dirname, "../../../.env") });
@@ -20,7 +21,7 @@ const cleanDatabaseUrl = databaseUrl.replace(/\?sslmode=.*$/, "");
 
 export const pool = new Pool({
   connectionString: cleanDatabaseUrl,
-  family: 4,
+  lookup: (hostname, _options, callback) => dns.lookup(hostname, { family: 4 }, callback),
   ssl: { rejectUnauthorized: false },
 });
 export const db = drizzle(pool, { schema });
