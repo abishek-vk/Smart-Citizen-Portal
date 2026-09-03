@@ -53,40 +53,50 @@ export const ensureUser = async (req: Request, res: Response, next: NextFunction
     return;
   }
 
-  let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
-  if (!user) {
-    const info = await getClerkUserInfo(clerkId, auth);
-    [user] = await db.insert(usersTable).values({
-      id: randomUUID(),
-      clerkId,
-      email: info.email,
-      firstName: info.firstName,
-      lastName: info.lastName,
-      avatarUrl: info.avatarUrl,
-      role: "citizen",
-    }).returning();
-  } else if (user.email.endsWith("@unknown.com") || user.email === clerkId) {
-    // Self-repair existing users created with placeholder emails
-    const info = await getClerkUserInfo(clerkId, auth);
-    if (!info.email.endsWith("@unknown.com")) {
-      const [updated] = await db.update(usersTable)
-        .set({
-          email: info.email,
-          firstName: info.firstName !== "User" ? info.firstName : user.firstName,
-          lastName: info.lastName || user.lastName,
-          avatarUrl: info.avatarUrl || user.avatarUrl,
-        })
-        .where(eq(usersTable.id, user.id))
-        .returning();
-      if (updated) {
-        user = updated;
+  try {
+    let [user] = await db.select().from(usersTable).where(eq(usersTable.clerkId, clerkId));
+    if (!user) {
+      const info = await getClerkUserInfo(clerkId, auth);
+      [user] = await db.insert(usersTable).values({
+        id: randomUUID(),
+        clerkId,
+        email: info.email,
+        firstName: info.firstName,
+        lastName: info.lastName,
+        avatarUrl: info.avatarUrl,
+        role: "citizen",
+      }).returning();
+    } else if (user.email.endsWith("@unknown.com") || user.email === clerkId) {
+      // Self-repair existing users created with placeholder emails
+      const info = await getClerkUserInfo(clerkId, auth);
+      if (!info.email.endsWith("@unknown.com")) {
+        const [updated] = await db.update(usersTable)
+          .set({
+            email: info.email,
+            firstName: info.firstName !== "User" ? info.firstName : user.firstName,
+            lastName: info.lastName || user.lastName,
+            avatarUrl: info.avatarUrl || user.avatarUrl,
+          })
+          .where(eq(usersTable.id, user.id))
+          .returning();
+        if (updated) {
+          user = updated;
+        }
       }
     }
-  }
 
-  (req as any).user = user;
-  (req as any).clerkId = clerkId;
-  next();
+    if (!user) {
+      res.status(503).json({ error: "Unable to provision user profile" });
+      return;
+    }
+
+    (req as any).user = user;
+    (req as any).clerkId = clerkId;
+    next();
+  } catch (error) {
+    console.error(`[ensureUser] Failed to load user ${clerkId}:`, error);
+    res.status(503).json({ error: "Unable to load user profile" });
+  }
 };
 
 export const requireAdmin = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

@@ -20,6 +20,7 @@ const cleanDatabaseUrl = databaseUrl.replace(/\?sslmode=.*$/, "");
 
 export const pool = new Pool({
   connectionString: cleanDatabaseUrl,
+  family: 4,
   ssl: { rejectUnauthorized: false },
 });
 export const db = drizzle(pool, { schema });
