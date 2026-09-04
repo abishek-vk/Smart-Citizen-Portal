@@ -149,7 +149,7 @@ export function LiveCityMap({
           <h4 style="margin: 0 0 4px 0; font-size: 14px; font-weight: 700; color: #0f172a;">${item.name}</h4>
           ${item.address ? `<p style="margin: 0 0 8px 0; font-size: 12px; color: #64748b;">📍 ${item.address}</p>` : ""}
           <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 8px; background: #f8fafc; padding: 6px 8px; border-radius: 6px;">
-            ${item.pricePerHour !== undefined ? `<span><strong>$${item.pricePerHour.toFixed(2)}</strong>/hr</span>` : ""}
+            ${item.pricePerHour !== undefined ? `<span><strong>₹${item.pricePerHour.toFixed(2)}</strong>/hr</span>` : ""}
             ${item.availableSpots !== undefined ? `<span style="color: ${badgeColor}; font-weight: 600;">${item.availableSpots} spots</span>` : ""}
           </div>
           ${

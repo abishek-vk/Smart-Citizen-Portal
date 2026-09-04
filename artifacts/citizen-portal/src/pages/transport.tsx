@@ -65,7 +65,7 @@ export default function Transport() {
                   <Clock className="w-4 h-4" /> Every {route.frequency}m
                 </div>
                 <div className="font-medium text-foreground">
-                  ${route.fare.toFixed(2)}
+                  ₹{route.fare.toFixed(2)}
                 </div>
               </div>
             </CardContent>

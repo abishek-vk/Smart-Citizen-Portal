@@ -147,7 +147,7 @@ export default function Parking() {
                         <div className="flex items-center gap-4 text-sm mb-6 bg-muted/50 p-3 rounded-lg">
                           <div>
                             <p className="text-muted-foreground text-xs">Rate</p>
-                            <p className="font-medium">${lot.pricePerHour.toFixed(2)}/hr</p>
+                            <p className="font-medium">₹{lot.pricePerHour.toFixed(2)}/hr</p>
                           </div>
                           <div className="w-px h-8 bg-border" />
                           <div>
@@ -240,7 +240,7 @@ export default function Parking() {
               <Car className="w-5 h-5 text-primary" /> Reserve Spot at {bookingLot?.name}
             </DialogTitle>
             <DialogDescription>
-              {bookingLot?.address} • ${bookingLot?.pricePerHour.toFixed(2)}/hr
+              {bookingLot?.address} • ₹{bookingLot?.pricePerHour.toFixed(2)}/hr
             </DialogDescription>
           </DialogHeader>
 
@@ -277,12 +277,12 @@ export default function Parking() {
             <div className="bg-muted p-4 rounded-xl space-y-1 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Rate:</span>
-                <span>${bookingLot?.pricePerHour.toFixed(2)} / hr</span>
+                <span>₹{bookingLot?.pricePerHour.toFixed(2)} / hr</span>
               </div>
               <div className="flex justify-between font-bold text-base pt-2 border-t">
                 <span>Estimated Total:</span>
                 <span className="text-primary">
-                  ${((bookingLot?.pricePerHour || 0) * durationHours).toFixed(2)}
+                  ₹{((bookingLot?.pricePerHour || 0) * durationHours).toFixed(2)}
                 </span>
               </div>
             </div>

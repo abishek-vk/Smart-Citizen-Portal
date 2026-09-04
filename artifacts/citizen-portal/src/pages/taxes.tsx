@@ -48,7 +48,7 @@ function PaymentModal({ bill, type }: { bill: any, type: 'property' | 'water' })
       onSuccess: (res: any) => {
         toast({ 
           title: "Payment Successful", 
-          description: `Paid $${bill.totalDue.toFixed(2)} via ${paymentMethod.toUpperCase()}. Receipt: ${res?.receiptNumber || 'Generated'}` 
+          description: `Paid ₹${bill.totalDue.toFixed(2)} via ${paymentMethod.toUpperCase()}. Receipt: ${res?.receiptNumber || 'Generated'}` 
         })
         queryClient.invalidateQueries({ queryKey: type === 'property' ? getListPropertyTaxesQueryKey() : getListWaterTaxesQueryKey() })
         queryClient.invalidateQueries({ queryKey: getGetTaxSummaryQueryKey() })
@@ -89,10 +89,10 @@ function PaymentModal({ bill, type }: { bill: any, type: 'property' | 'water' })
               </p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-extrabold text-foreground font-serif">${bill.totalDue.toFixed(2)}</p>
+              <p className="text-2xl font-extrabold text-foreground font-serif">₹{bill.totalDue.toFixed(2)}</p>
               {bill.penaltyAmount > 0 && (
                 <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                  Incl. ${bill.penaltyAmount.toFixed(2)} late fee
+                  Incl. ₹{bill.penaltyAmount.toFixed(2)} late fee
                 </span>
               )}
             </div>
@@ -184,7 +184,7 @@ function PaymentModal({ bill, type }: { bill: any, type: 'property' | 'water' })
         <DialogFooter className="gap-2">
           <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
           <Button size="sm" onClick={handlePay} disabled={mutation.isPending} className="gap-2">
-            {mutation.isPending ? "Processing..." : `Confirm & Pay $${bill.totalDue.toFixed(2)}`}
+            {mutation.isPending ? "Processing..." : `Confirm & Pay ₹${bill.totalDue.toFixed(2)}`}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -256,22 +256,22 @@ function ReceiptModal({ bill, type }: { bill: any, type: 'property' | 'water' })
             <div className="p-4 space-y-2 text-xs border-b">
               <div className="flex justify-between">
                 <span>Base Tax / Assessment ({type === 'property' ? bill.financialYear : bill.billingPeriod})</span>
-                <span className="font-medium">${(bill.taxAmount || bill.totalDue).toFixed(2)}</span>
+                <span className="font-medium">₹{(bill.taxAmount || bill.totalDue).toFixed(2)}</span>
               </div>
               {bill.penaltyAmount > 0 && (
                 <div className="flex justify-between text-amber-600">
                   <span>Late Fee / Penalty Charge</span>
-                  <span>${bill.penaltyAmount.toFixed(2)}</span>
+                  <span>₹{bill.penaltyAmount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between text-muted-foreground">
                 <span>Municipal Cess / Service Charge</span>
-                <span>$0.00</span>
+                <span>₹0.00</span>
               </div>
             </div>
             <div className="p-4 bg-primary/5 flex justify-between font-bold text-sm">
               <span>Total Paid Amount</span>
-              <span className="font-serif text-lg text-primary">${bill.totalDue.toFixed(2)}</span>
+              <span className="font-serif text-lg text-primary">₹{bill.totalDue.toFixed(2)}</span>
             </div>
           </div>
 
@@ -318,7 +318,7 @@ function TaxCalculatorModal() {
   const typeRateMap: Record<string, number> = { residential: 0.15, commercial: 0.35, industrial: 0.45 }
   
   const estimatedPropertyTax = Math.round(area * (typeRateMap[propType] || 0.15) * (zoneRateMap[zone] || 1.0) * 100) / 100
-  const estimatedWaterTax = Math.round(units * 0.85 * 100) / 100
+  const estimatedWaterTax = Math.round(units * 15 * 100) / 100
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -388,10 +388,10 @@ function TaxCalculatorModal() {
             <div className="bg-primary/10 border border-primary/20 rounded-xl p-4 flex justify-between items-center mt-4">
               <div>
                 <p className="text-xs font-medium text-muted-foreground">Estimated Annual Tax</p>
-                <p className="text-2xl font-bold font-serif text-primary">${estimatedPropertyTax.toFixed(2)}</p>
+                <p className="text-2xl font-bold font-serif text-primary">₹{estimatedPropertyTax.toFixed(2)}</p>
               </div>
               <Badge className="bg-primary/20 text-primary border-transparent">
-                ~${(estimatedPropertyTax / 2).toFixed(2)} / half-year
+                ~₹{(estimatedPropertyTax / 2).toFixed(2)} / half-year
               </Badge>
             </div>
           </TabsContent>
@@ -408,14 +408,14 @@ function TaxCalculatorModal() {
             </div>
 
             <div className="text-xs text-muted-foreground space-y-1 bg-muted p-3 rounded-lg">
-              <p>• Standard municipal tariff: <strong>$0.85 / unit</strong></p>
+              <p>• Standard municipal tariff: <strong>₹15.00 / unit</strong></p>
               <p>• Billing frequency: Quarterly (3 months)</p>
             </div>
 
             <div className="bg-sky-50 dark:bg-sky-950/50 border border-sky-200 dark:border-sky-800 rounded-xl p-4 flex justify-between items-center mt-4">
               <div>
                 <p className="text-xs font-medium text-sky-700 dark:text-sky-300">Estimated Quarterly Bill</p>
-                <p className="text-2xl font-bold font-serif text-sky-600 dark:text-sky-400">${estimatedWaterTax.toFixed(2)}</p>
+                <p className="text-2xl font-bold font-serif text-sky-600 dark:text-sky-400">₹{estimatedWaterTax.toFixed(2)}</p>
               </div>
               <Badge variant="outline" className="border-sky-300 text-sky-600">
                 100% Metered Tariff
@@ -681,7 +681,7 @@ export default function Taxes() {
                 <Receipt className="w-4 h-4 text-indigo-400" /> Municipal Dues Overview
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold font-serif tracking-tight text-white">
-                ${summary.totalDue.toFixed(2)}
+                ₹{summary.totalDue.toFixed(2)}
               </h2>
               {summary.overdueCount > 0 ? (
                 <div className="flex items-center gap-1.5 mt-3 text-xs bg-rose-500/20 border border-rose-500/40 text-rose-300 px-3 py-1 rounded-full inline-flex font-medium">
@@ -696,11 +696,11 @@ export default function Taxes() {
             <div className="grid grid-cols-2 gap-6 md:gap-10 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-8 text-left md:text-right w-full md:w-auto">
               <div>
                 <p className="text-indigo-200/80 text-xs font-medium mb-1">Property Tax Pending</p>
-                <p className="text-2xl font-bold font-serif text-white">${summary.propertyTaxDue.toFixed(2)}</p>
+                <p className="text-2xl font-bold font-serif text-white">₹{summary.propertyTaxDue.toFixed(2)}</p>
               </div>
               <div>
                 <p className="text-indigo-200/80 text-xs font-medium mb-1">Water Tax Pending</p>
-                <p className="text-2xl font-bold font-serif text-white">${summary.waterTaxDue.toFixed(2)}</p>
+                <p className="text-2xl font-bold font-serif text-white">₹{summary.waterTaxDue.toFixed(2)}</p>
               </div>
             </div>
           </CardContent>
@@ -807,14 +807,14 @@ export default function Taxes() {
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground pt-1 justify-center sm:justify-start">
                       <span>ID: <strong className="font-mono">{bill.propertyId}</strong></span>
                       <span>Type: <strong className="capitalize">{bill.propertyType}</strong></span>
-                      <span>Assessed: <strong>${bill.assessedValue?.toLocaleString()}</strong></span>
+                      <span>Assessed: <strong>₹{bill.assessedValue?.toLocaleString('en-IN')}</strong></span>
                     </div>
                   </div>
 
                   <div className="text-center sm:text-right shrink-0 min-w-[140px] border-t sm:border-t-0 sm:border-l pt-4 sm:pt-0 sm:pl-6 border-border w-full sm:w-auto">
-                    <p className="text-3xl font-extrabold font-serif tracking-tight">${bill.totalDue.toFixed(2)}</p>
+                    <p className="text-3xl font-extrabold font-serif tracking-tight">₹{bill.totalDue.toFixed(2)}</p>
                     {bill.penaltyAmount > 0 && bill.status !== 'paid' && (
-                      <p className="text-[11px] text-rose-500 font-medium">Includes ${bill.penaltyAmount.toFixed(2)} penalty</p>
+                      <p className="text-[11px] text-rose-500 font-medium">Includes ₹{bill.penaltyAmount.toFixed(2)} penalty</p>
                     )}
                     {bill.status !== 'paid' && bill.dueDate && (
                       <p className="text-xs text-muted-foreground mt-0.5">Due: {format(new Date(bill.dueDate), 'MMM d, yyyy')}</p>
@@ -896,14 +896,14 @@ export default function Taxes() {
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground pt-1 justify-center sm:justify-start">
                       <span>Connection: <strong className="font-mono">{bill.connectionId}</strong></span>
                       <span>Consumption: <strong>{bill.unitsConsumed} Units</strong></span>
-                      <span>Rate: <strong>${bill.ratePerUnit}/unit</strong></span>
+                      <span>Rate: <strong>₹{bill.ratePerUnit}/unit</strong></span>
                     </div>
                   </div>
 
                   <div className="text-center sm:text-right shrink-0 min-w-[140px] border-t sm:border-t-0 sm:border-l pt-4 sm:pt-0 sm:pl-6 border-border w-full sm:w-auto">
-                    <p className="text-3xl font-extrabold font-serif tracking-tight">${bill.totalDue.toFixed(2)}</p>
+                    <p className="text-3xl font-extrabold font-serif tracking-tight">₹{bill.totalDue.toFixed(2)}</p>
                     {bill.penaltyAmount > 0 && bill.status !== 'paid' && (
-                      <p className="text-[11px] text-rose-500 font-medium">Includes ${bill.penaltyAmount.toFixed(2)} penalty</p>
+                      <p className="text-[11px] text-rose-500 font-medium">Includes ₹{bill.penaltyAmount.toFixed(2)} penalty</p>
                     )}
                     {bill.status !== 'paid' && bill.dueDate && (
                       <p className="text-xs text-muted-foreground mt-0.5">Due: {format(new Date(bill.dueDate), 'MMM d, yyyy')}</p>
@@ -914,7 +914,7 @@ export default function Taxes() {
 
                     <div className="mt-3 flex gap-2 justify-center sm:justify-end">
                       {bill.status !== 'paid' ? (
-                        <PaymentModal bill={bill} type="property" />
+                        <PaymentModal bill={bill} type="water" />
                       ) : (
                         <ReceiptModal bill={bill} type="water" />
                       )}

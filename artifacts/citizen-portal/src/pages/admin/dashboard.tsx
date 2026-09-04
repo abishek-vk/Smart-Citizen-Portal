@@ -2,7 +2,7 @@ import { useGetAdminDashboard } from "@workspace/api-client-react"
 import { PageHeader } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Users, AlertCircle, TrendingUp, DollarSign } from "lucide-react"
+import { Users, AlertCircle, TrendingUp, IndianRupee } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts"
 import { format } from "date-fns"
 
@@ -66,9 +66,9 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-muted-foreground font-medium text-sm">Revenue Today</p>
-                <h3 className="text-4xl font-bold font-serif mt-2">${(data.totalRevenue / 1000).toFixed(1)}k</h3>
+                <h3 className="text-4xl font-bold font-serif mt-2">₹{(data.totalRevenue / 1000).toFixed(1)}k</h3>
               </div>
-              <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg"><DollarSign className="w-5 h-5" /></div>
+              <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg"><IndianRupee className="w-5 h-5" /></div>
             </div>
           </CardContent>
         </Card>
@@ -152,11 +152,11 @@ export default function AdminDashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.revenueByType} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v/1000}k`} />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
                 <YAxis dataKey="type" type="category" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => String(v || '').replace(/_/g, ' ')} width={100} className="capitalize" />
                 <RechartsTooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px' }}
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Revenue']}
                   labelFormatter={(v) => <span className="capitalize">{String(v || '').replace(/_/g, ' ')}</span>}
                 />
                 <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={32}>

@@ -100,10 +100,10 @@ async function autoSeedTaxesForUser(userId: string) {
         meterReading: 1420,
         previousReading: 1310,
         unitsConsumed: 110,
-        ratePerUnit: 0.85,
-        taxAmount: 93.50,
+        ratePerUnit: 15.00,
+        taxAmount: 1650.00,
         penaltyAmount: 0,
-        totalDue: 93.50,
+        totalDue: 1650.00,
         billingPeriod: "Q1 2025 (Jan - Mar)",
         dueDate: future30,
         status: "pending",
@@ -116,10 +116,10 @@ async function autoSeedTaxesForUser(userId: string) {
         meterReading: 1310,
         previousReading: 1180,
         unitsConsumed: 130,
-        ratePerUnit: 0.85,
-        taxAmount: 110.50,
-        penaltyAmount: 12.00,
-        totalDue: 122.50,
+        ratePerUnit: 15.00,
+        taxAmount: 1950.00,
+        penaltyAmount: 150.00,
+        totalDue: 2100.00,
         billingPeriod: "Q4 2024 (Oct - Dec)",
         dueDate: past15,
         status: "overdue",
@@ -132,10 +132,10 @@ async function autoSeedTaxesForUser(userId: string) {
         meterReading: 1180,
         previousReading: 1060,
         unitsConsumed: 120,
-        ratePerUnit: 0.85,
-        taxAmount: 102.00,
+        ratePerUnit: 15.00,
+        taxAmount: 1800.00,
         penaltyAmount: 0,
-        totalDue: 102.00,
+        totalDue: 1800.00,
         billingPeriod: "Q3 2024 (Jul - Sep)",
         dueDate: past60,
         status: "paid",
@@ -148,7 +148,7 @@ async function autoSeedTaxesForUser(userId: string) {
       userId,
       type: "water_tax",
       referenceId: wtr3Id,
-      amount: 102.00,
+      amount: 1800.00,
       paymentMethod: "upi",
       receiptNumber: "WTX-RECEIPT-2024-9912",
       status: "success",
@@ -271,7 +271,7 @@ router.post("/taxes/water", requireAuth, ensureUser, async (req, res): Promise<v
   const user = (req as any).user;
   const { connectionId, connectionAddress, unitsConsumed } = req.body;
   const units = Number(unitsConsumed || 100);
-  const ratePerUnit = 0.85;
+  const ratePerUnit = 15.00;
   const taxAmount = Math.round(units * ratePerUnit * 100) / 100;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 

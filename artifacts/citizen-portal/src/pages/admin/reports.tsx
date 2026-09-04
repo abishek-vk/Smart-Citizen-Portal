@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend } from "recharts"
-import { FileText, Percent, DollarSign, Activity } from "lucide-react"
+import { FileText, Percent, IndianRupee, Activity } from "lucide-react"
 
 export default function AdminReports() {
   const { data: revenue, isLoading: loadingRev } = useGetRevenueReport()
@@ -32,8 +32,8 @@ export default function AdminReports() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="bg-primary text-primary-foreground border-none">
           <CardContent className="p-6">
-            <DollarSign className="w-6 h-6 mb-4 opacity-75" />
-            <h3 className="text-3xl font-bold font-serif">${(revenue.totalRevenue/1000000).toFixed(2)}M</h3>
+            <IndianRupee className="w-6 h-6 mb-4 opacity-75" />
+            <h3 className="text-3xl font-bold font-serif">₹{(revenue.totalRevenue/100000).toFixed(2)}L</h3>
             <p className="text-primary-foreground/80 mt-1">Total Revenue YTD</p>
           </CardContent>
         </Card>
@@ -63,8 +63,8 @@ export default function AdminReports() {
               <BarChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `$${v/1000}k`} />
-                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px' }} formatter={(v:number) => `$${v.toLocaleString()}`} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={v => `₹${v/1000}k`} />
+                <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px' }} formatter={(v:number) => `₹${v.toLocaleString('en-IN')}`} />
                 <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={40} />
               </BarChart>
             </ResponsiveContainer>

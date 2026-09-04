@@ -53,7 +53,7 @@ export default function Payments() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold font-serif text-lg">${payment.amount.toFixed(2)}</div>
+                    <div className="font-bold font-serif text-lg">₹{payment.amount.toFixed(2)}</div>
                     <Badge variant="outline" className="mt-1 text-[10px] text-muted-foreground">
                       {payment.paymentMethod.replace('_', ' ')}
                     </Badge>

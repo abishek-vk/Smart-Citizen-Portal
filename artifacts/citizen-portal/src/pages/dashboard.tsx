@@ -56,7 +56,7 @@ export default function CitizenDashboard() {
             <Receipt className="w-4 h-4 text-sky-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">${data.totalTaxDue.toFixed(2)}</div>
+            <div className="text-3xl font-bold">₹{data.totalTaxDue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground mt-1">Total outstanding</p>
           </CardContent>
         </Card>
@@ -139,7 +139,7 @@ export default function CitizenDashboard() {
                       <p className="text-xs text-muted-foreground">Due: {format(new Date(payment.dueDate), 'MMM d, yyyy')}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-sm text-destructive">${payment.amount.toFixed(2)}</p>
+                      <p className="font-bold text-sm text-destructive">₹{payment.amount.toFixed(2)}</p>
                       <Badge variant="outline" className="text-[10px] uppercase border-destructive/20 text-destructive">{payment.status}</Badge>
                     </div>
                   </div>
