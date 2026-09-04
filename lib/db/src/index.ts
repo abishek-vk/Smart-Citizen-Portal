@@ -2,6 +2,10 @@ import path from "node:path";
 import dns from "node:dns";
 import dotenv from "dotenv";
 
+if (dns.setDefaultResultOrder) {
+  dns.setDefaultResultOrder("ipv4first");
+}
+
 dotenv.config({ path: path.resolve(import.meta.dirname, "../../../.env") });
 dotenv.config();
 import { drizzle } from "drizzle-orm/node-postgres";
