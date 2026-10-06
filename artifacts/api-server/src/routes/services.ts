@@ -201,11 +201,20 @@ router.get("/admin/citizens", requireAuth, ensureUser, requireAdmin, async (req,
 });
 router.get("/admin/audit-logs", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
   const params = ListAuditLogsQueryParams.safeParse(req.query);
-  const page = params.success ? (params.data.page ?? 1) : 1;
-  const limit = params.success ? (params.data.limit ?? 20) : 20;
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const { page = 1, limit = 20, action, userId } = params.data;
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+    res.status(400).json({ error: "Page must be positive and limit must be between 1 and 100" });
+    return;
+  }
   const offset = (page - 1) * limit;
-  const [{ total }] = await db.select({ total: count() }).from(auditLogsTable);
-  const data = await db.select().from(auditLogsTable).orderBy(desc(auditLogsTable.createdAt)).limit(limit).offset(offset);
+  const conditions: any[] = [];
+  if (action) conditions.push(ilike(auditLogsTable.action, `%${action}%`));
+  if (userId) conditions.push(ilike(auditLogsTable.userId, `%${userId}%`));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const [{ total }] = await db.select({ total: count() }).from(auditLogsTable).where(where);
+  const data = await db.select().from(auditLogsTable).where(where)
+    .orderBy(desc(auditLogsTable.createdAt)).limit(limit).offset(offset);
   res.json({ data, pagination: { total: Number(total), page, limit, totalPages: Math.ceil(Number(total) / limit) } });
 });
 router.get("/admin/reports/revenue", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {

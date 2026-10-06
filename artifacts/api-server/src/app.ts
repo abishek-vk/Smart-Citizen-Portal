@@ -10,6 +10,7 @@ import {
   clerkProxyMiddleware,
   getClerkProxyHost,
 } from "./middlewares/clerkProxyMiddleware";
+import { auditLogMiddleware } from "./middlewares/auditLog";
 import router from "./routes";
 
 const app = express();
@@ -49,6 +50,7 @@ app.use(
   })),
 );
 
+app.use(auditLogMiddleware);
 app.use("/api", router);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
