@@ -136,7 +136,7 @@ function ProtectedRoute({ component: Component, adminOnly = false }: { component
     return <Redirect to="/sign-in" />
   }
 
-  if (adminOnly && profile && profile.role !== 'admin' && profile.role !== 'super_admin') {
+  if (adminOnly && profile?.role !== 'admin' && profile?.role !== 'super_admin') {
     return <Redirect to="/dashboard" />
   }
 

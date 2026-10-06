@@ -14,14 +14,18 @@ const router: IRouter = Router();
 router.get("/certificates", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const user = (req as any).user;
   const params = ListCertificatesQueryParams.safeParse(req.query);
-  const page = params.success ? (params.data.page ?? 1) : 1;
-  const limit = params.success ? (params.data.limit ?? 10) : 10;
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const { page = 1, limit = 10 } = params.data;
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+    res.status(400).json({ error: "Page must be positive and limit must be between 1 and 100" });
+    return;
+  }
   const offset = (page - 1) * limit;
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   const conditions: any[] = [];
   if (!isAdmin) conditions.push(eq(certificatesTable.userId, user.id));
-  if (params.success && params.data.type) conditions.push(eq(certificatesTable.type, params.data.type as any));
-  if (params.success && params.data.status) conditions.push(eq(certificatesTable.status, params.data.status as any));
+  if (params.data.type) conditions.push(eq(certificatesTable.type, params.data.type as any));
+  if (params.data.status) conditions.push(eq(certificatesTable.status, params.data.status as any));
   const where = conditions.length > 0 ? and(...conditions) : undefined;
   const [{ total }] = await db.select({ total: count() }).from(certificatesTable).where(where);
   const data = await db.select().from(certificatesTable).where(where).orderBy(desc(certificatesTable.createdAt)).limit(limit).offset(offset);
@@ -72,8 +76,17 @@ router.patch("/certificates/:id", requireAuth, ensureUser, requireAdmin, async (
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
   const parsed = UpdateCertificateBody.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
-  const updateData: any = { ...parsed.data };
-  if (parsed.data.status === "approved") updateData.approvedAt = new Date();
+  if (parsed.data.status === "rejected" && !parsed.data.adminRemarks?.trim()) {
+    res.status(400).json({ error: "A rejection reason is required" });
+    return;
+  }
+  const updateData = {
+    ...parsed.data,
+    ...(parsed.data.status === "approved" ? {
+      approvedAt: new Date(),
+      certificateNumber: parsed.data.certificateNumber ?? `CERT-${new Date().getFullYear()}-${randomUUID().slice(0, 8).toUpperCase()}`,
+    } : {}),
+  };
   const [updated] = await db.update(certificatesTable).set(updateData).where(eq(certificatesTable.id, params.data.id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json(updated);

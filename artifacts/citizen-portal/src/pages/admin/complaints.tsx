@@ -13,13 +13,17 @@ import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
+type ComplaintStatusFilter = "all" | "pending" | "in_progress" | "resolved" | "closed"
+
 export default function AdminComplaints() {
   const [search, setSearch] = useState("")
-  const [statusFilter, setStatusFilter] = useState<any>(undefined)
-  
-  const { data, isLoading } = useListComplaints({ 
-    search: search || undefined, 
-    status: statusFilter !== 'all' ? statusFilter : undefined 
+  const [statusFilter, setStatusFilter] = useState<ComplaintStatusFilter>("all")
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, error, refetch } = useListComplaints({
+    search: search.trim() || undefined,
+    status: statusFilter === "all" ? undefined : statusFilter,
+    page,
+    limit: 10,
   })
   
   const updateMutation = useUpdateComplaint()
@@ -27,12 +31,13 @@ export default function AdminComplaints() {
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
-  const handleStatusChange = (id: string, newStatus: any) => {
+  const handleStatusChange = (id: string, newStatus: "pending" | "in_progress" | "resolved" | "closed") => {
     updateMutation.mutate({ id, data: { status: newStatus } }, {
       onSuccess: () => {
         toast({ title: "Status updated" })
         queryClient.invalidateQueries({ queryKey: getListComplaintsQueryKey() })
-      }
+      },
+      onError: error => toast({ title: "Unable to update status", description: error.message, variant: "destructive" }),
     })
   }
 
@@ -41,7 +46,8 @@ export default function AdminComplaints() {
       onSuccess: () => {
         toast({ title: "Analysis complete" })
         queryClient.invalidateQueries({ queryKey: getListComplaintsQueryKey() })
-      }
+      },
+      onError: error => toast({ title: "Analysis failed", description: error.message, variant: "destructive" }),
     })
   }
 
@@ -65,10 +71,10 @@ export default function AdminComplaints() {
             placeholder="Search tickets, locations..." 
             className="pl-9"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setPage(1) }}
           />
         </div>
-        <Select value={statusFilter || "all"} onValueChange={(v) => setStatusFilter(v)}>
+        <Select value={statusFilter} onValueChange={(value: ComplaintStatusFilter) => { setStatusFilter(value); setPage(1) }}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter Status" />
           </SelectTrigger>
@@ -77,6 +83,7 @@ export default function AdminComplaints() {
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="in_progress">In Progress</SelectItem>
             <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -84,6 +91,13 @@ export default function AdminComplaints() {
       <div className="grid gap-4">
         {isLoading ? (
           Array(4).fill(0).map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)
+        ) : isError || data === undefined ? (
+          <div role="alert" className="py-12 text-center text-sm text-destructive">
+            Unable to load complaints: {error?.message ?? "Complaint data is unavailable."}
+            <Button className="ml-3" size="sm" variant="outline" onClick={() => refetch()}>
+              Retry
+            </Button>
+          </div>
         ) : data?.data.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">No complaints found.</div>
         ) : data?.data.map((complaint) => (
@@ -110,9 +124,10 @@ export default function AdminComplaints() {
                     <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10 flex gap-3">
                       <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <div className="text-sm">
-                        <span className="font-medium text-primary">AI Analysis: </span>
-                        Suggested department: <span className="font-medium">{complaint.aiCategory}</span>. 
-                        Est. resolution: {complaint.estimatedResolution}. 
+                        <span className="font-medium text-primary">Automated triage: </span>
+                        Suggested category: <span className="font-medium">{complaint.aiCategory.replace(/_/g, " ")}</span>.
+                        Priority: <span className="font-medium capitalize">{complaint.aiPriority || complaint.priority}</span>.
+                        Est. resolution: {complaint.estimatedResolution}.
                         <span className="text-muted-foreground ml-1">({Math.round((complaint.aiConfidence || 0)*100)}% confidence)</span>
                       </div>
                     </div>
@@ -122,7 +137,7 @@ export default function AdminComplaints() {
                 <div className="p-6 lg:w-64 bg-muted/20 flex flex-col justify-between gap-4">
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wider">Status</label>
-                    <Select value={complaint.status} onValueChange={(v) => handleStatusChange(complaint.id, v)}>
+                    <Select disabled={updateMutation.isPending} value={complaint.status} onValueChange={(v: "pending" | "in_progress" | "resolved" | "closed") => handleStatusChange(complaint.id, v)}>
                       <SelectTrigger className="bg-background">
                         <SelectValue />
                       </SelectTrigger>
@@ -140,9 +155,9 @@ export default function AdminComplaints() {
                       variant="outline" 
                       className="w-full gap-2" 
                       onClick={() => handleAnalyze(complaint.id)}
-                      disabled={analyzeMutation.isPending && analyzeMutation.variables?.id === complaint.id}
+                      disabled={analyzeMutation.isPending || updateMutation.isPending}
                     >
-                      <Sparkles className="w-4 h-4" /> Run AI Analysis
+                      <Sparkles className="w-4 h-4" /> Run Triage Analysis
                     </Button>
                   )}
                 </div>
@@ -151,6 +166,15 @@ export default function AdminComplaints() {
           </Card>
         ))}
       </div>
+      {data && data.pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>{data.pagination.total} complaints · Page {page} of {data.pagination.totalPages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(current => current - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={page >= data.pagination.totalPages} onClick={() => setPage(current => current + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

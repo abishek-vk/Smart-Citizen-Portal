@@ -9,27 +9,35 @@ import { useQueryClient } from "@tanstack/react-query"
 import { getListCertificatesQueryKey } from "@workspace/api-client-react"
 import { useToast } from "@/hooks/use-toast"
 import { FileBadge, Check, X } from "lucide-react"
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
 
 export default function AdminCertificates() {
-  // Pass status 'pending' to only see queue
-  const { data, isLoading } = useListCertificates({ status: 'pending' })
+  const [page, setPage] = useState(1)
+  const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({})
+  const { data, isLoading, isError, error, refetch } = useListCertificates({ status: "pending", page, limit: 10 })
   const updateMutation = useUpdateCertificate()
   const queryClient = useQueryClient()
   const { toast } = useToast()
 
   const handleAction = (id: string, action: 'approved' | 'rejected') => {
+    const rejectionReason = rejectionReasons[id]?.trim()
+    if (action === "rejected" && !rejectionReason) {
+      toast({ title: "Rejection reason required", description: "Add a reason before rejecting this application.", variant: "destructive" })
+      return
+    }
     updateMutation.mutate({ 
       id, 
       data: { 
         status: action,
-        certificateNumber: action === 'approved' ? `CERT-${Date.now().toString().slice(-6)}` : undefined,
-        adminRemarks: action === 'rejected' ? 'Incomplete documentation.' : undefined
+        adminRemarks: action === 'rejected' ? rejectionReason : undefined
       } 
     }, {
       onSuccess: () => {
         toast({ title: `Certificate ${action}` })
-        queryClient.invalidateQueries({ queryKey: getListCertificatesQueryKey({ status: 'pending' }) })
-      }
+        queryClient.invalidateQueries({ queryKey: getListCertificatesQueryKey() })
+      },
+      onError: error => toast({ title: `Unable to ${action.slice(0, -1)} certificate`, description: error.message, variant: "destructive" }),
     })
   }
 
@@ -40,6 +48,11 @@ export default function AdminCertificates() {
       <div className="grid gap-4">
         {isLoading ? (
           Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)
+        ) : isError ? (
+          <div role="alert" className="py-12 text-center text-sm text-destructive">
+            Unable to load certificate applications: {error.message}
+            <Button className="ml-3" size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
+          </div>
         ) : data?.data.length === 0 ? (
           <div className="text-center py-16 bg-card border border-dashed rounded-xl">
             <FileBadge className="w-12 h-12 text-muted-foreground opacity-30 mx-auto mb-4" />
@@ -63,7 +76,14 @@ export default function AdminCertificates() {
                 </div>
               </div>
               
-              <div className="flex md:flex-col gap-3 shrink-0 justify-center">
+              <div className="flex flex-col gap-3 shrink-0 justify-center md:w-56">
+                <Input
+                  aria-label={`Rejection reason for ${cert.subjectName}`}
+                  placeholder="Reason for rejection..."
+                  value={rejectionReasons[cert.id] ?? ""}
+                  onChange={event => setRejectionReasons(reasons => ({ ...reasons, [cert.id]: event.target.value }))}
+                  disabled={updateMutation.isPending}
+                />
                 <Button 
                   className="bg-emerald-600 hover:bg-emerald-700 text-white w-full md:w-32"
                   onClick={() => handleAction(cert.id, 'approved')}
@@ -84,6 +104,15 @@ export default function AdminCertificates() {
           </Card>
         ))}
       </div>
+      {data && data.pagination.totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+          <span>{data.pagination.total} applications · Page {page} of {data.pagination.totalPages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={page <= 1 || updateMutation.isPending} onClick={() => setPage(current => current - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={page >= data.pagination.totalPages || updateMutation.isPending} onClick={() => setPage(current => current + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

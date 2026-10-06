@@ -2,16 +2,17 @@ import { useGetAdminDashboard } from "@workspace/api-client-react"
 import { PageHeader } from "@/components/layout/main-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 import { Users, AlertCircle, TrendingUp, IndianRupee } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 
 const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
 
 export default function AdminDashboard() {
-  const { data, isLoading } = useGetAdminDashboard()
+  const { data, isLoading, isError, error, refetch } = useGetAdminDashboard()
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <PageHeader title="Command Center" description="Loading metrics..." />
@@ -21,6 +22,18 @@ export default function AdminDashboard() {
         <div className="grid gap-6 md:grid-cols-2">
           <Skeleton className="h-[400px] rounded-xl" />
           <Skeleton className="h-[400px] rounded-xl" />
+        </div>
+      </div>
+    )
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="space-y-6">
+        <PageHeader title="Command Center" description="City operations and performance overview." />
+        <div role="alert" className="rounded-lg border border-destructive/30 p-6 text-sm text-destructive">
+          <p>Unable to load admin dashboard: {error?.message ?? "Dashboard data is unavailable."}</p>
+          <Button className="mt-3" size="sm" variant="outline" onClick={() => refetch()}>Retry</Button>
         </div>
       </div>
     )
@@ -102,11 +115,11 @@ export default function AdminDashboard() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" tickFormatter={(v) => format(new Date(v), 'MMM d')} stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(v), 'MMM d')} stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                 <RechartsTooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
-                  labelFormatter={(v) => format(new Date(v), 'MMM d, yyyy')}
+                  labelFormatter={(v) => format(parseISO(String(v)), 'MMM d, yyyy')}
                 />
                 <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
               </AreaChart>
@@ -146,7 +159,7 @@ export default function AdminDashboard() {
         <Card className="md:col-span-2">
           <CardHeader>
             <CardTitle>Revenue Breakdown</CardTitle>
-            <CardDescription>Collections by department</CardDescription>
+            <CardDescription>Collections by payment type</CardDescription>
           </CardHeader>
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">

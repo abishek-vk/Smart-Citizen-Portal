@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, complaintsTable, usersTable } from "@workspace/db";
 import { eq, and, sql, count, avg, desc, ilike, or } from "drizzle-orm";
-import { requireAuth, ensureUser } from "../lib/auth";
+import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import {
   ListComplaintsQueryParams, CreateComplaintBody, UpdateComplaintBody,
   GetComplaintParams, UpdateComplaintParams, AnalyzeComplaintParams,
@@ -36,18 +36,28 @@ router.get("/complaints/stats", requireAuth, ensureUser, async (req, res): Promi
 router.get("/complaints", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const user = (req as any).user;
   const params = ListComplaintsQueryParams.safeParse(req.query);
-  const page = params.success ? (params.data.page ?? 1) : 1;
-  const limit = params.success ? (params.data.limit ?? 10) : 10;
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const { page = 1, limit = 10 } = params.data;
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+    res.status(400).json({ error: "Page must be positive and limit must be between 1 and 100" });
+    return;
+  }
   const offset = (page - 1) * limit;
   const isAdmin = user.role === "admin" || user.role === "super_admin";
 
   const conditions: any[] = [];
   if (!isAdmin) conditions.push(eq(complaintsTable.userId, user.id));
-  if (params.success && params.data.status) conditions.push(eq(complaintsTable.status, params.data.status as any));
-  if (params.success && params.data.category) conditions.push(eq(complaintsTable.category, params.data.category as any));
-  if (params.success && params.data.priority) conditions.push(eq(complaintsTable.priority, params.data.priority as any));
-  if (params.success && params.data.search) {
-    conditions.push(or(ilike(complaintsTable.title, `%${params.data.search}%`), ilike(complaintsTable.description, `%${params.data.search}%`)));
+  if (params.data.status) conditions.push(eq(complaintsTable.status, params.data.status as any));
+  if (params.data.category) conditions.push(eq(complaintsTable.category, params.data.category as any));
+  if (params.data.priority) conditions.push(eq(complaintsTable.priority, params.data.priority as any));
+  if (params.data.search) {
+    const search = `%${params.data.search}%`;
+    conditions.push(or(
+      ilike(complaintsTable.title, search),
+      ilike(complaintsTable.description, search),
+      ilike(complaintsTable.location, search),
+      ilike(complaintsTable.address, search),
+    ));
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
@@ -95,31 +105,63 @@ router.patch("/complaints/:id", requireAuth, ensureUser, async (req, res): Promi
   const user = (req as any).user;
   const isAdmin = user.role === "admin" || user.role === "super_admin";
   if (!isAdmin) { res.status(403).json({ error: "Admin required" }); return; }
-  const [updated] = await db.update(complaintsTable).set(parsed.data).where(eq(complaintsTable.id, params.data.id)).returning();
+  const updateData = {
+    ...parsed.data,
+    ...(parsed.data.status === "resolved" ? { resolvedAt: new Date() } :
+      parsed.data.status ? { resolvedAt: null } : {}),
+  };
+  const [updated] = await db.update(complaintsTable).set(updateData).where(eq(complaintsTable.id, params.data.id)).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   const [userRow] = await db.select().from(usersTable).where(eq(usersTable.id, updated.userId));
   res.json({ ...updated, user: userRow });
 });
 
-router.post("/complaints/:id/ai-analysis", requireAuth, ensureUser, async (req, res): Promise<void> => {
+router.post("/complaints/:id/ai-analysis", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
   const params = AnalyzeComplaintParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
   const [complaint] = await db.select().from(complaintsTable).where(eq(complaintsTable.id, params.data.id));
   if (!complaint) { res.status(404).json({ error: "Not found" }); return; }
 
-  const categories = ["electricity","water","roads","garbage","transport"];
-  const priorities = ["low","medium","high","critical"];
-  const category = categories[Math.floor(Math.random() * categories.length)];
-  const priority = priorities[Math.floor(Math.random() * priorities.length)];
+  const text = `${complaint.title} ${complaint.description} ${complaint.location}`.toLowerCase();
+  const categoryRules = [
+    { category: "electricity", department: "Electricity Department", keywords: ["electric", "power", "outage", "voltage", "wire"] },
+    { category: "water", department: "Water & Sanitation", keywords: ["water", "pipe", "leak", "sewage", "drinking"] },
+    { category: "roads", department: "Public Works", keywords: ["road", "pothole", "pavement", "sidewalk", "bridge"] },
+    { category: "garbage", department: "Sanitation", keywords: ["garbage", "waste", "trash", "dump", "rubbish"] },
+    { category: "transport", department: "Transport Department", keywords: ["bus", "transport", "traffic", "transit", "signal"] },
+    { category: "street_lights", department: "Electricity Department", keywords: ["streetlight", "street light", "lamp", "dark street"] },
+    { category: "drainage", department: "Water & Sanitation", keywords: ["drain", "flood", "stormwater", "blocked sewer"] },
+    { category: "public_safety", department: "Public Safety", keywords: ["safety", "crime", "hazard", "unsafe", "emergency"] },
+    { category: "environment", department: "Environment Department", keywords: ["pollution", "smoke", "noise", "tree", "environment"] },
+  ];
+  const scoredCategories = categoryRules.map(rule => ({
+    ...rule,
+    matches: rule.keywords.filter(keyword => text.includes(keyword)).length,
+  }));
+  const bestMatch = scoredCategories.reduce((best, candidate) =>
+    candidate.matches > best.matches ? candidate : best);
+  const matched = bestMatch.matches > 0;
+  const category = matched ? bestMatch.category : complaint.category;
+  const suggestedDepartment = matched
+    ? bestMatch.department
+    : "Review the existing complaint category";
+  const priority = /\b(emergency|life.?threatening|dangerous|urgent|injury|fire)\b/.test(text)
+    ? "critical"
+    : /\b(severe|major|blocked|overflow|outage|unsafe)\b/.test(text)
+      ? "high"
+      : complaint.priority;
+  const confidence = matched ? Math.min(0.95, 0.55 + bestMatch.matches * 0.1) : 0.5;
 
   const analysis = {
     complaintId: params.data.id,
     category,
-    confidence: Math.round((0.7 + Math.random() * 0.3) * 100) / 100,
+    confidence,
     priority,
-    reasoning: `Based on keywords in the complaint, this appears to be a ${category} issue requiring ${priority} priority attention.`,
+    reasoning: matched
+      ? `Matched ${bestMatch.matches} category keyword(s) in the complaint text.`
+      : `No category keywords matched; retained the citizen-selected ${category} category.`,
     estimatedResolutionTime: priority === "critical" ? "24 hours" : priority === "high" ? "3 days" : "7 days",
-    suggestedDepartment: category === "electricity" ? "Electricity Dept" : category === "water" ? "Water & Sanitation" : "Public Works",
+    suggestedDepartment,
   };
 
   await db.update(complaintsTable).set({

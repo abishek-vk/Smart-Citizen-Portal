@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { db, complaintsTable, propertyTaxesTable, waterTaxesTable, certificatesTable, notificationsTable, usersTable, paymentsTable } from "@workspace/db";
+import { db, complaintsTable, propertyTaxesTable, waterTaxesTable, certificatesTable, notificationsTable, usersTable, paymentsTable, departmentsTable } from "@workspace/db";
 import { eq, and, gte, count, sum, sql, desc } from "drizzle-orm";
-import { requireAuth, ensureUser } from "../lib/auth";
+import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import { GetComplaintTrendsQueryParams } from "@workspace/api-zod";
 import type { IRouter } from "express";
 
@@ -69,14 +69,15 @@ router.get("/dashboard/citizen", requireAuth, ensureUser, async (req, res): Prom
   });
 });
 
-router.get("/dashboard/admin", requireAuth, ensureUser, async (req, res): Promise<void> => {
+router.get("/dashboard/admin", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
   const [totalCitizens] = await db.select({ count: count() }).from(usersTable).where(eq(usersTable.role, "citizen"));
-  const [totalComplaints] = await db.select({ count: count() }).from(complaintsTable);
-  const [totalRevenue] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(eq(paymentsTable.status, "success"));
-
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+  const [todayRevenue] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(eq(paymentsTable.status, "success"), gte(paymentsTable.paidAt, today)));
   const [resolvedToday] = await db.select({ count: count() }).from(complaintsTable)
-    .where(and(eq(complaintsTable.status, "resolved"), gte(complaintsTable.updatedAt, today)));
+    .where(and(eq(complaintsTable.status, "resolved"), gte(complaintsTable.resolvedAt, today)));
+  const [activeComplaints] = await db.select({ count: count() }).from(complaintsTable)
+    .where(sql`${complaintsTable.status} IN ('pending', 'in_progress')`);
 
   const [pendingCerts] = await db.select({ count: count() }).from(certificatesTable).where(eq(certificatesTable.status, "pending"));
 
@@ -108,17 +109,29 @@ router.get("/dashboard/admin", requireAuth, ensureUser, async (req, res): Promis
   const recentActivity = (await db.select().from(complaintsTable).orderBy(desc(complaintsTable.updatedAt)).limit(10))
     .map(c => ({ id: c.id, type: "complaint", description: c.title, timestamp: c.updatedAt.toISOString(), status: c.status }));
 
-  // Citizen growth: last 7 days
-  const citizenGrowth = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (6 - i));
-    return { date: d.toISOString().split("T")[0], value: Math.floor(Math.random() * 5) + 1 };
+  const growthStart = new Date();
+  growthStart.setUTCHours(0, 0, 0, 0);
+  growthStart.setUTCDate(growthStart.getUTCDate() - 29);
+  const registrationDay = sql<string>`to_char(${usersTable.createdAt}::date, 'YYYY-MM-DD')`;
+  const registrations = await db.select({
+    date: registrationDay,
+    value: count(),
+  }).from(usersTable)
+    .where(and(eq(usersTable.role, "citizen"), gte(usersTable.createdAt, growthStart)))
+    .groupBy(registrationDay);
+  const registrationCounts = new Map(registrations.map(row => [row.date, Number(row.value)]));
+  const citizenGrowth = Array.from({ length: 30 }, (_, i) => {
+    const d = new Date(growthStart);
+    d.setUTCDate(d.getUTCDate() + i);
+    const date = d.toISOString().split("T")[0];
+    return { date, value: registrationCounts.get(date) ?? 0 };
   });
 
   res.json({
     totalCitizens: Number(totalCitizens.count),
-    totalComplaints: Number(totalComplaints.count),
+    totalComplaints: Number(activeComplaints.count),
     resolvedComplaintsToday: Number(resolvedToday.count),
-    totalRevenue: Number(totalRevenue?.total ?? 0),
+    totalRevenue: Number(todayRevenue?.total ?? 0),
     pendingCertificates: Number(pendingCerts.count),
     complaintsByStatus,
     complaintsByCategory,
@@ -130,25 +143,54 @@ router.get("/dashboard/admin", requireAuth, ensureUser, async (req, res): Promis
 
 router.get("/dashboard/complaint-trends", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const params = GetComplaintTrendsQueryParams.safeParse(req.query);
-  const period = params.success ? (params.data.period ?? "30d") : "30d";
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const period = params.data.period ?? "30d";
   const days = period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 365;
 
-  const trends = Array.from({ length: Math.min(days, 30) }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (days - 1 - i));
-    return { date: d.toISOString().split("T")[0], value: Math.floor(Math.random() * 15) + 1 };
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+  const complaintDay = sql<string>`to_char(${complaintsTable.createdAt}::date, 'YYYY-MM-DD')`;
+  const rows = await db.select({ date: complaintDay, value: count() })
+    .from(complaintsTable)
+    .where(gte(complaintsTable.createdAt, start))
+    .groupBy(complaintDay);
+  const countsByDay = new Map(rows.map(row => [row.date, Number(row.value)]));
+  const trends = Array.from({ length: days }, (_, i) => {
+    const d = new Date(start);
+    d.setUTCDate(d.getUTCDate() + i);
+    const date = d.toISOString().split("T")[0];
+    return { date, value: countsByDay.get(date) ?? 0 };
   });
 
   res.json(trends);
 });
 
-router.get("/dashboard/department-performance", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const departments = ["Public Works", "Water & Sanitation", "Transport", "Electricity", "Parks & Recreation"];
-  const performance = departments.map(dept => ({
-    department: dept,
-    resolved: Math.floor(Math.random() * 50) + 10,
-    pending: Math.floor(Math.random() * 20) + 2,
-    avgDays: Math.round((Math.random() * 5 + 1) * 10) / 10,
-    score: Math.round((Math.random() * 30 + 70) * 10) / 10,
+router.get("/dashboard/department-performance", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
+  const departments = await db.select().from(departmentsTable).where(eq(departmentsTable.isActive, true));
+  const performance = await Promise.all(departments.map(async department => {
+    const departmentComplaints = await db.select({
+      status: complaintsTable.status,
+      createdAt: complaintsTable.createdAt,
+      resolvedAt: complaintsTable.resolvedAt,
+    }).from(complaintsTable).where(eq(complaintsTable.departmentId, department.id));
+    const resolved = departmentComplaints.filter(complaint => complaint.status === "resolved");
+    const pending = departmentComplaints.filter(complaint =>
+      complaint.status === "pending" || complaint.status === "in_progress");
+    const resolvedDurations = resolved
+      .filter(complaint => complaint.resolvedAt)
+      .map(complaint => (complaint.resolvedAt!.getTime() - complaint.createdAt.getTime()) / 86_400_000);
+    const total = resolved.length + pending.length;
+
+    return {
+      department: department.name,
+      resolved: resolved.length,
+      pending: pending.length,
+      avgDays: resolvedDurations.length
+        ? Math.round(resolvedDurations.reduce((sum, days) => sum + days, 0) / resolvedDurations.length * 10) / 10
+        : 0,
+      score: total ? Math.round(resolved.length / total * 1000) / 10 : 0,
+    };
   }));
   res.json(performance);
 });

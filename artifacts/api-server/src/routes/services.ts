@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, transportRoutesTable, transportStopsTable, transportAlertsTable, parksTable, librariesTable, booksTable, borrowingsTable, paymentsTable, notificationsTable, feedbackTable, auditLogsTable, usersTable, departmentsTable } from "@workspace/db";
-import { eq, and, count, desc, ilike, or, sum } from "drizzle-orm";
+import { db, transportRoutesTable, transportStopsTable, transportAlertsTable, parksTable, librariesTable, booksTable, borrowingsTable, paymentsTable, notificationsTable, feedbackTable, auditLogsTable, usersTable, departmentsTable, complaintsTable, certificatesTable, garbageRequestsTable, parkingReservationsTable } from "@workspace/db";
+import { eq, and, count, desc, ilike, or, sum, gte, inArray, isNull, ne, sql, lte } from "drizzle-orm";
 import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import {
   ListBooksQueryParams, BorrowBookBody,
@@ -189,14 +189,26 @@ router.get("/departments", requireAuth, ensureUser, async (req, res): Promise<vo
 // ─── ADMIN ───
 router.get("/admin/citizens", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
   const params = ListCitizensQueryParams.safeParse(req.query);
-  const page = params.success ? (params.data.page ?? 1) : 1;
-  const limit = params.success ? (params.data.limit ?? 20) : 20;
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const { page = 1, limit = 20 } = params.data;
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
+    res.status(400).json({ error: "Page must be positive and limit must be between 1 and 100" });
+    return;
+  }
   const offset = (page - 1) * limit;
-  const conditions: any[] = [eq(usersTable.role, "citizen")];
-  if (params.success && params.data.search) conditions.push(or(ilike(usersTable.email, `%${params.data.search}%`), ilike(usersTable.firstName, `%${params.data.search}%`)));
+  const conditions = [eq(usersTable.role, "citizen"), isNull(usersTable.deletedAt)];
+  if (params.data.search) {
+    const search = `%${params.data.search}%`;
+    conditions.push(or(
+      ilike(usersTable.email, search),
+      ilike(usersTable.firstName, search),
+      ilike(usersTable.lastName, search),
+    )!);
+  }
   const where = and(...conditions);
   const [{ total }] = await db.select({ total: count() }).from(usersTable).where(where);
-  const data = await db.select().from(usersTable).where(where).limit(limit).offset(offset);
+  const data = await db.select().from(usersTable).where(where)
+    .orderBy(desc(usersTable.createdAt)).limit(limit).offset(offset);
   res.json({ data, pagination: { total: Number(total), page, limit, totalPages: Math.ceil(Number(total) / limit) } });
 });
 router.get("/admin/audit-logs", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
@@ -218,31 +230,116 @@ router.get("/admin/audit-logs", requireAuth, ensureUser, requireAdmin, async (re
   res.json({ data, pagination: { total: Number(total), page, limit, totalPages: Math.ceil(Number(total) / limit) } });
 });
 router.get("/admin/reports/revenue", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
-  const [{ total }] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(eq(paymentsTable.status, "success"));
-  const [ptax] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(and(eq(paymentsTable.type, "property_tax"), eq(paymentsTable.status, "success")));
-  const [wtax] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(and(eq(paymentsTable.type, "water_tax"), eq(paymentsTable.status, "success")));
-  const [parking] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable).where(and(eq(paymentsTable.type, "parking"), eq(paymentsTable.status, "success")));
-  const revenueByPeriod = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (29 - i));
-    return { date: d.toISOString().split("T")[0], value: Math.floor(Math.random() * 50000) + 10000 };
+  const params = GetRevenueReportQueryParams.safeParse(req.query);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const period = params.data.period ?? "30d";
+  const days = period === "7d" ? 7 : period === "30d" ? 30 : period === "90d" ? 90 : 365;
+  const start = new Date();
+  start.setUTCHours(0, 0, 0, 0);
+  if (period === "1y") {
+    start.setUTCDate(1);
+    start.setUTCMonth(start.getUTCMonth() - 11);
+  } else {
+    start.setUTCDate(start.getUTCDate() - (days - 1));
+  }
+  const successful = and(eq(paymentsTable.status, "success"), gte(paymentsTable.paidAt, start));
+  const [{ total }] = await db.select({ total: sum(paymentsTable.amount) })
+    .from(paymentsTable).where(successful);
+  const [ptax] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(successful, eq(paymentsTable.type, "property_tax")));
+  const [wtax] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(successful, eq(paymentsTable.type, "water_tax")));
+  const [parking] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(successful, eq(paymentsTable.type, "parking")));
+  const [collectedTax] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(successful, inArray(paymentsTable.type, ["property_tax", "water_tax"])));
+  const [eligibleTax] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(gte(paymentsTable.paidAt, start), inArray(paymentsTable.type, ["property_tax", "water_tax"]), ne(paymentsTable.status, "refunded")));
+  const periodBucket = period === "1y"
+    ? sql<string>`to_char(${paymentsTable.paidAt}, 'YYYY-MM')`
+    : sql<string>`to_char(${paymentsTable.paidAt}, 'YYYY-MM-DD')`;
+  const revenueByPeriod = await db.select({
+    date: periodBucket,
+    value: sum(paymentsTable.amount),
+  }).from(paymentsTable).where(successful).groupBy(periodBucket).orderBy(periodBucket);
+  const revenueByBucket = new Map(revenueByPeriod.map(row => [row.date, Number(row.value ?? 0)]));
+  const bucketCount = period === "1y" ? 12 : days;
+  const completeRevenueByPeriod = Array.from({ length: bucketCount }, (_, index) => {
+    const date = new Date(start);
+    if (period === "1y") {
+      date.setUTCMonth(date.getUTCMonth() + index);
+      const month = date.toISOString().slice(0, 7);
+      return { date: `${month}-01`, value: revenueByBucket.get(month) ?? 0 };
+    }
+    date.setUTCDate(date.getUTCDate() + index);
+    const day = date.toISOString().slice(0, 10);
+    return { date: day, value: revenueByBucket.get(day) ?? 0 };
   });
+  const eligibleTaxAmount = Number(eligibleTax?.total ?? 0);
   res.json({
     totalRevenue: Number(total ?? 0), propertyTaxRevenue: Number(ptax?.total ?? 0),
     waterTaxRevenue: Number(wtax?.total ?? 0), parkingRevenue: Number(parking?.total ?? 0),
-    revenueByPeriod, collectionRate: 78.5,
+    revenueByPeriod: completeRevenueByPeriod,
+    collectionRate: eligibleTaxAmount
+      ? Math.round(Number(collectedTax?.total ?? 0) / eligibleTaxAmount * 1000) / 10
+      : 0,
   });
 });
 router.get("/admin/reports/services", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
-  const [total] = await db.select({ count: count() }).from(require("@workspace/db").complaintsTable);
-  const [resolved] = await db.select({ count: count() }).from(require("@workspace/db").complaintsTable).where(eq(require("@workspace/db").complaintsTable.status, "resolved"));
-  const [pending] = await db.select({ count: count() }).from(require("@workspace/db").complaintsTable).where(eq(require("@workspace/db").complaintsTable.status, "pending"));
-  const [inProgress] = await db.select({ count: count() }).from(require("@workspace/db").complaintsTable).where(eq(require("@workspace/db").complaintsTable.status, "in_progress"));
-  const [closed] = await db.select({ count: count() }).from(require("@workspace/db").complaintsTable).where(eq(require("@workspace/db").complaintsTable.status, "closed"));
+  const [total] = await db.select({ count: count() }).from(complaintsTable);
+  const [resolved] = await db.select({ count: count() }).from(complaintsTable).where(eq(complaintsTable.status, "resolved"));
+  const [pending] = await db.select({ count: count() }).from(complaintsTable).where(eq(complaintsTable.status, "pending"));
+  const [inProgress] = await db.select({ count: count() }).from(complaintsTable).where(eq(complaintsTable.status, "in_progress"));
+  const [closed] = await db.select({ count: count() }).from(complaintsTable).where(eq(complaintsTable.status, "closed"));
+  const resolvedRows = await db.select({
+    createdAt: complaintsTable.createdAt,
+    resolvedAt: complaintsTable.resolvedAt,
+  }).from(complaintsTable)
+    .where(and(eq(complaintsTable.status, "resolved"), sql`${complaintsTable.resolvedAt} IS NOT NULL`));
+  const averageResolution = resolvedRows.length
+    ? resolvedRows.reduce((totalDays, complaint) =>
+      totalDays + ((complaint.resolvedAt!.getTime() - complaint.createdAt.getTime()) / 86_400_000), 0) / resolvedRows.length
+    : 0;
+  const certificateCounts = await Promise.all(["approved", "pending", "rejected"].map(async status => {
+    const [result] = await db.select({ count: count() }).from(certificatesTable)
+      .where(eq(certificatesTable.status, status as "approved" | "pending" | "rejected"));
+    return [status, Number(result?.count ?? 0)] as const;
+  }));
+  const certificateStatusCounts = Object.fromEntries(certificateCounts);
+  const [certificateTotal] = await db.select({ count: count() }).from(certificatesTable);
+  const [garbageTotal] = await db.select({ count: count() }).from(garbageRequestsTable);
+  const [garbageCompleted] = await db.select({ count: count() }).from(garbageRequestsTable)
+    .where(eq(garbageRequestsTable.status, "completed"));
+  const [garbageScheduled] = await db.select({ count: count() }).from(garbageRequestsTable)
+    .where(eq(garbageRequestsTable.status, "scheduled"));
+  const [reservationTotal] = await db.select({ count: count() }).from(parkingReservationsTable);
+  const [activeReservations] = await db.select({ count: count() }).from(parkingReservationsTable)
+    .where(and(eq(parkingReservationsTable.status, "active"), lte(parkingReservationsTable.startTime, new Date()), gte(parkingReservationsTable.endTime, new Date())));
+  const [parkingRevenue] = await db.select({ total: sum(paymentsTable.amount) }).from(paymentsTable)
+    .where(and(eq(paymentsTable.status, "success"), eq(paymentsTable.type, "parking")));
   res.json({
-    complaints: { total: Number(total.count), resolved: Number(resolved.count), pending: Number(pending.count), inProgress: Number(inProgress.count), closed: Number(closed.count), avgResolutionDays: 3.5 },
-    certificates: { total: 45, approved: 30, pending: 10, rejected: 5 },
-    garbage: { total: 120, completed: 95, scheduled: 25 },
-    parking: { totalReservations: 200, activeNow: 45, revenue: 15000 },
+    complaints: {
+      total: Number(total?.count ?? 0), resolved: Number(resolved?.count ?? 0),
+      pending: Number(pending?.count ?? 0), inProgress: Number(inProgress?.count ?? 0),
+      closed: Number(closed?.count ?? 0),
+      avgResolutionDays: Math.round(averageResolution * 10) / 10,
+    },
+    certificates: {
+      total: Number(certificateTotal?.count ?? 0),
+      approved: certificateStatusCounts.approved ?? 0,
+      pending: certificateStatusCounts.pending ?? 0,
+      rejected: certificateStatusCounts.rejected ?? 0,
+    },
+    garbage: {
+      total: Number(garbageTotal?.count ?? 0),
+      completed: Number(garbageCompleted?.count ?? 0),
+      scheduled: Number(garbageScheduled?.count ?? 0),
+    },
+    parking: {
+      totalReservations: Number(reservationTotal?.count ?? 0),
+      activeNow: Number(activeReservations?.count ?? 0),
+      revenue: Number(parkingRevenue?.total ?? 0),
+    },
   });
 });
 
