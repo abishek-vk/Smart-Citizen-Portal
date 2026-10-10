@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, transportRoutesTable, transportStopsTable, transportAlertsTable, parksTable, librariesTable, booksTable, borrowingsTable, paymentsTable, notificationsTable, feedbackTable, auditLogsTable, usersTable, departmentsTable, complaintsTable, certificatesTable, garbageRequestsTable, parkingReservationsTable } from "@workspace/db";
-import { eq, and, count, desc, ilike, or, sum, gte, inArray, isNull, ne, sql, lte } from "drizzle-orm";
+import { eq, and, count, desc, ilike, or, sum, gt, gte, inArray, isNull, ne, sql, lte } from "drizzle-orm";
 import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import {
   ListBooksQueryParams, BorrowBookBody,
@@ -55,7 +55,7 @@ router.get("/libraries/books", requireAuth, ensureUser, async (req, res): Promis
   const conditions: any[] = [];
   if (params.success && params.data.libraryId) conditions.push(eq(booksTable.libraryId, params.data.libraryId));
   if (params.success && params.data.search) conditions.push(or(ilike(booksTable.title, `%${params.data.search}%`), ilike(booksTable.author, `%${params.data.search}%`)));
-  if (params.success && params.data.available) conditions.push(eq(booksTable.availableCopies, 1));
+  if (params.success && params.data.available) conditions.push(gt(booksTable.availableCopies, 0));
   const where = conditions.length > 0 ? and(...conditions) : undefined;
   const [{ total }] = await db.select({ total: count() }).from(booksTable).where(where);
   const data = await db.select().from(booksTable).where(where).limit(limit).offset(offset);
@@ -87,8 +87,10 @@ router.post("/libraries/borrowings", requireAuth, ensureUser, async (req, res): 
 });
 router.post("/libraries/borrowings/:id/return", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const [borrowing] = await db.select().from(borrowingsTable).where(eq(borrowingsTable.id, rawId));
+  const user = (req as any).user;
+  const [borrowing] = await db.select().from(borrowingsTable).where(and(eq(borrowingsTable.id, rawId), eq(borrowingsTable.userId, user.id)));
   if (!borrowing) { res.status(404).json({ error: "Not found" }); return; }
+  if (borrowing.status === "returned") { res.status(400).json({ error: "Book already returned" }); return; }
   const [updated] = await db.update(borrowingsTable).set({ status: "returned", returnedAt: new Date() }).where(eq(borrowingsTable.id, rawId)).returning();
   const [book] = await db.select().from(booksTable).where(eq(booksTable.id, borrowing.bookId));
   if (book) await db.update(booksTable).set({ availableCopies: book.availableCopies + 1 }).where(eq(booksTable.id, book.id));
@@ -112,7 +114,8 @@ router.get("/payments", requireAuth, ensureUser, async (req, res): Promise<void>
 });
 router.get("/payments/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const [payment] = await db.select().from(paymentsTable).where(eq(paymentsTable.id, rawId));
+  const user = (req as any).user;
+  const [payment] = await db.select().from(paymentsTable).where(and(eq(paymentsTable.id, rawId), eq(paymentsTable.userId, user.id)));
   if (!payment) { res.status(404).json({ error: "Not found" }); return; }
   res.json(payment);
 });
@@ -143,7 +146,8 @@ router.post("/notifications/mark-all-read", requireAuth, ensureUser, async (req,
 });
 router.patch("/notifications/:id/read", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const rawId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-  const [updated] = await db.update(notificationsTable).set({ isRead: true }).where(eq(notificationsTable.id, rawId)).returning();
+  const user = (req as any).user;
+  const [updated] = await db.update(notificationsTable).set({ isRead: true }).where(and(eq(notificationsTable.id, rawId), eq(notificationsTable.userId, user.id))).returning();
   if (!updated) { res.status(404).json({ error: "Not found" }); return; }
   res.json(updated);
 });

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, garbageRequestsTable } from "@workspace/db";
 import { eq, and, count, desc } from "drizzle-orm";
-import { requireAuth, ensureUser } from "../lib/auth";
+import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import {
   ListGarbageRequestsQueryParams, CreateGarbageRequestBody,
   GetGarbageRequestParams, UpdateGarbageRequestParams, UpdateGarbageRequestBody,
@@ -53,12 +53,15 @@ router.post("/garbage", requireAuth, ensureUser, async (req, res): Promise<void>
 router.get("/garbage/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const params = GetGarbageRequestParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const user = (req as any).user;
   const [item] = await db.select().from(garbageRequestsTable).where(eq(garbageRequestsTable.id, params.data.id));
   if (!item) { res.status(404).json({ error: "Not found" }); return; }
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
+  if (!isAdmin && item.userId !== user.id) { res.status(403).json({ error: "Forbidden" }); return; }
   res.json(item);
 });
 
-router.patch("/garbage/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
+router.patch("/garbage/:id", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
   const params = UpdateGarbageRequestParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
   const parsed = UpdateGarbageRequestBody.safeParse(req.body);

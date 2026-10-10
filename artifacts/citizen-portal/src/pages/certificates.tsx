@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { PageHeader } from "@/components/layout/main-layout"
 import { useListCertificates, useApplyCertificate, getListCertificatesQueryKey, useGetProfile } from "@workspace/api-client-react"
-import { getApiUrl } from "@/lib/api"
+import { customFetch } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,8 +41,20 @@ export default function Certificates() {
     rejected: "bg-destructive text-destructive-foreground"
   }
 
-  const handleDownload = (certId: string) => {
-    window.open(getApiUrl(`/api/certificates/${certId}/download`), '_blank')
+  const handleDownload = async (certId: string) => {
+    // Open the tab synchronously so popup blockers allow it, then fill it once the
+    // authenticated fetch (which carries the Bearer token) returns.
+    const win = window.open('', '_blank')
+    try {
+      const html = await customFetch<string>(`/api/certificates/${certId}/download`, { responseType: 'text' })
+      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
+      if (win) win.location.href = url
+      else window.open(url, '_blank')
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (err: any) {
+      win?.close()
+      toast({ title: "Download failed", description: err?.message || "Could not download certificate", variant: "destructive" })
+    }
   }
 
   const handleOpenChange = (isOpen: boolean) => {

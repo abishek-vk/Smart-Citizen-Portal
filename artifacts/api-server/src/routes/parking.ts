@@ -61,8 +61,10 @@ router.post("/parking/reservations", requireAuth, ensureUser, async (req, res): 
 router.get("/parking/reservations/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const params = GetParkingReservationParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const user = (req as any).user;
   const [reservation] = await db.select().from(parkingReservationsTable).where(eq(parkingReservationsTable.id, params.data.id));
   if (!reservation) { res.status(404).json({ error: "Not found" }); return; }
+  if (reservation.userId !== user.id) { res.status(403).json({ error: "Forbidden" }); return; }
   const [lot] = await db.select().from(parkingLotsTable).where(eq(parkingLotsTable.id, reservation.parkingLotId));
   res.json({ ...reservation, parkingLot: { ...lot, amenities: lot?.amenities ?? [] } });
 });

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, complaintsTable, usersTable } from "@workspace/db";
-import { eq, and, sql, count, avg, desc, ilike, or } from "drizzle-orm";
+import { eq, and, sql, count, avg, desc, ilike, or, inArray, isNotNull } from "drizzle-orm";
 import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import {
   ListComplaintsQueryParams, CreateComplaintBody, UpdateComplaintBody,
@@ -23,13 +23,25 @@ router.get("/complaints/stats", requireAuth, ensureUser, async (req, res): Promi
   }));
 
   const total = counts.reduce((a, b) => a + b.count, 0);
+  const resolvedWhere = and(
+    eq(complaintsTable.status, "resolved"),
+    isNotNull(complaintsTable.resolvedAt),
+    ...(baseWhere ? [baseWhere] : []),
+  );
+  const resolvedRows = await db.select({
+    createdAt: complaintsTable.createdAt,
+    resolvedAt: complaintsTable.resolvedAt,
+  }).from(complaintsTable).where(resolvedWhere);
+  const avgResolutionDays = resolvedRows.length
+    ? resolvedRows.reduce((sum, c) => sum + (c.resolvedAt!.getTime() - c.createdAt.getTime()) / 86_400_000, 0) / resolvedRows.length
+    : 0;
   res.json({
     total,
     pending: counts.find(c => c.status === "pending")?.count ?? 0,
     inProgress: counts.find(c => c.status === "in_progress")?.count ?? 0,
     resolved: counts.find(c => c.status === "resolved")?.count ?? 0,
     closed: counts.find(c => c.status === "closed")?.count ?? 0,
-    avgResolutionDays: 3.5,
+    avgResolutionDays: Math.round(avgResolutionDays * 10) / 10,
   });
 });
 
@@ -65,8 +77,12 @@ router.get("/complaints", requireAuth, ensureUser, async (req, res): Promise<voi
   const rows = await db.select().from(complaintsTable).where(where)
     .orderBy(desc(complaintsTable.createdAt)).limit(limit).offset(offset);
 
-  const [userRow] = await db.select().from(usersTable).where(eq(usersTable.id, user.id));
-  const data = rows.map(c => ({ ...c, user: userRow }));
+  const ownerIds = [...new Set(rows.map(c => c.userId))];
+  const owners = ownerIds.length > 0
+    ? await db.select().from(usersTable).where(inArray(usersTable.id, ownerIds))
+    : [];
+  const ownersById = new Map(owners.map(u => [u.id, u]));
+  const data = rows.map(c => ({ ...c, user: ownersById.get(c.userId) }));
 
   res.json({
     data,

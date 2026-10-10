@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, propertyTaxesTable, waterTaxesTable, paymentsTable } from "@workspace/db";
-import { eq, and, sum, count } from "drizzle-orm";
+import { eq, and, sum, count, min, inArray } from "drizzle-orm";
 import { requireAuth, ensureUser } from "../lib/auth";
 import {
   ListPropertyTaxesQueryParams, GetPropertyTaxParams, PayPropertyTaxParams, PayPropertyTaxBody,
@@ -168,16 +168,19 @@ router.post("/taxes/seed-sample", requireAuth, ensureUser, async (req, res): Pro
 router.get("/taxes/summary", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const user = (req as any).user;
   await autoSeedTaxesForUser(user.id);
-  const [ptax] = await db.select({ total: sum(propertyTaxesTable.totalDue) }).from(propertyTaxesTable).where(and(eq(propertyTaxesTable.userId, user.id), eq(propertyTaxesTable.status, "pending")));
-  const [wtax] = await db.select({ total: sum(waterTaxesTable.totalDue) }).from(waterTaxesTable).where(and(eq(waterTaxesTable.userId, user.id), eq(waterTaxesTable.status, "pending")));
+  const unpaidP = and(eq(propertyTaxesTable.userId, user.id), inArray(propertyTaxesTable.status, ["pending", "overdue"]));
+  const unpaidW = and(eq(waterTaxesTable.userId, user.id), inArray(waterTaxesTable.status, ["pending", "overdue"]));
+  const [ptax] = await db.select({ total: sum(propertyTaxesTable.totalDue), next: min(propertyTaxesTable.dueDate) }).from(propertyTaxesTable).where(unpaidP);
+  const [wtax] = await db.select({ total: sum(waterTaxesTable.totalDue), next: min(waterTaxesTable.dueDate) }).from(waterTaxesTable).where(unpaidW);
   const [overdueP] = await db.select({ count: count() }).from(propertyTaxesTable).where(and(eq(propertyTaxesTable.userId, user.id), eq(propertyTaxesTable.status, "overdue")));
   const [overdueW] = await db.select({ count: count() }).from(waterTaxesTable).where(and(eq(waterTaxesTable.userId, user.id), eq(waterTaxesTable.status, "overdue")));
   const propertyTaxDue = Number(ptax?.total ?? 0);
   const waterTaxDue = Number(wtax?.total ?? 0);
+  const dueDates = [ptax?.next, wtax?.next].filter((d): d is string => !!d).sort();
   res.json({
     propertyTaxDue, waterTaxDue, totalDue: propertyTaxDue + waterTaxDue,
     overdueCount: Number(overdueP.count) + Number(overdueW.count),
-    nextDueDate: null,
+    nextDueDate: dueDates[0] ?? null,
   });
 });
 
