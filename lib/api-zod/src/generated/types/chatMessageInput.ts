@@ -5,10 +5,12 @@
  * Smart City Digital Citizen Portal API
  * OpenAPI spec version: 1.0.0
  */
+import type { ChatMessageInputLanguage } from './chatMessageInputLanguage';
 
 export interface ChatMessageInput {
   /** @minLength 1 */
   message: string;
   /** @nullable */
   sessionId?: string | null;
+  language?: ChatMessageInputLanguage;
 }

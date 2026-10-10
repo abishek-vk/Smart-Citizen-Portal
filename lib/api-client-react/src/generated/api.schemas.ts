@@ -287,6 +287,40 @@ export interface AIAnalysis {
   suggestedDepartment: string;
 }
 
+export type PropertyTaxInputPropertyType = typeof PropertyTaxInputPropertyType[keyof typeof PropertyTaxInputPropertyType];
+
+
+export const PropertyTaxInputPropertyType = {
+  residential: 'residential',
+  commercial: 'commercial',
+  industrial: 'industrial',
+} as const;
+
+export interface PropertyTaxInput {
+  /** @maxLength 64 */
+  propertyId?: string;
+  /** @maxLength 500 */
+  propertyAddress?: string;
+  propertyType?: PropertyTaxInputPropertyType;
+  /**
+     * @maximum 1000000
+     * @exclusiveMinimum 0
+     */
+  areaSqFt?: number;
+}
+
+export interface WaterTaxInput {
+  /** @maxLength 64 */
+  connectionId?: string;
+  /** @maxLength 500 */
+  connectionAddress?: string;
+  /**
+     * @minimum 0
+     * @maximum 1000000
+     */
+  unitsConsumed?: number;
+}
+
 export type PropertyTaxPropertyType = typeof PropertyTaxPropertyType[keyof typeof PropertyTaxPropertyType];
 
 
@@ -919,12 +953,20 @@ export interface FeedbackStats {
   ratingDistribution: RatingCount[];
 }
 
+export type ChatMessageInputLanguage = typeof ChatMessageInputLanguage[keyof typeof ChatMessageInputLanguage];
+
+
+export const ChatMessageInputLanguage = {
+  en: 'en',
+  ta: 'ta',
+} as const;
+
 export interface ChatMessageInput {
   /** @minLength 1 */
   message: string;
   /** @nullable */
   sessionId?: string | null;
-  language?: 'en' | 'ta';
+  language?: ChatMessageInputLanguage;
 }
 
 export interface ChatResponse {

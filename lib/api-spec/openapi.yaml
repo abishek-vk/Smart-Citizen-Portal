@@ -316,6 +316,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PropertyTaxListResponse"
+    post:
+      operationId: createPropertyTax
+      tags: [taxes]
+      summary: Link a property and generate its tax bill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PropertyTaxInput"
+      responses:
+        "201":
+          description: Created property tax bill
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PropertyTax"
 
   /taxes/property/{id}:
     get:
@@ -389,6 +406,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WaterTaxListResponse"
+    post:
+      operationId: createWaterTax
+      tags: [taxes]
+      summary: Link a water connection and generate its bill
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WaterTaxInput"
+      responses:
+        "201":
+          description: Created water tax bill
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WaterTax"
 
   /taxes/water/{id}:
     get:
@@ -433,6 +467,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PaymentReceipt"
+
+  /taxes/seed-sample:
+    post:
+      operationId: seedSampleTaxes
+      tags: [taxes]
+      summary: Replace the current user's tax bills with sample data
+      responses:
+        "200":
+          description: Sample bills seeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
 
   /taxes/summary:
     get:
@@ -540,6 +587,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Certificate"
+
+  /certificates/{id}/download:
+    get:
+      operationId: downloadCertificate
+      tags: [certificates]
+      summary: Download an approved certificate as printable HTML
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Printable certificate
+          content:
+            text/html:
+              schema:
+                type: string
 
   # ─────────────────────────────── GARBAGE ───────────────────────────────
   /garbage:
@@ -1668,6 +1734,37 @@ components:
       required: [complaintId, category, confidence, priority, reasoning, estimatedResolutionTime, suggestedDepartment]
 
     # ─── Property Tax ───
+    PropertyTaxInput:
+      type: object
+      properties:
+        propertyId:
+          type: string
+          maxLength: 64
+        propertyAddress:
+          type: string
+          maxLength: 500
+        propertyType:
+          type: string
+          enum: [residential, commercial, industrial]
+        areaSqFt:
+          type: number
+          exclusiveMinimum: 0
+          maximum: 1000000
+
+    WaterTaxInput:
+      type: object
+      properties:
+        connectionId:
+          type: string
+          maxLength: 64
+        connectionAddress:
+          type: string
+          maxLength: 500
+        unitsConsumed:
+          type: number
+          minimum: 0
+          maximum: 1000000
+
     PropertyTax:
       type: object
       properties:
@@ -2438,6 +2535,10 @@ components:
           minLength: 1
         sessionId:
           type: ["string", "null"]
+        language:
+          type: string
+          enum: [en, ta]
+          default: en
       required: [message]
 
     ChatResponse:

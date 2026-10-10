@@ -5,6 +5,7 @@ import { requireAuth, ensureUser } from "../lib/auth";
 import {
   ListPropertyTaxesQueryParams, GetPropertyTaxParams, PayPropertyTaxParams, PayPropertyTaxBody,
   ListWaterTaxesQueryParams, GetWaterTaxParams, PayWaterTaxParams, PayWaterTaxBody,
+  CreatePropertyTaxBody, CreateWaterTaxBody,
 } from "@workspace/api-zod";
 import { randomUUID } from "crypto";
 import type { IRouter } from "express";
@@ -157,7 +158,13 @@ async function autoSeedTaxesForUser(userId: string) {
   }
 }
 
+// Wipes the caller's bills, so it is only exposed in demo/dev environments.
+const sampleDataEnabled = process.env.ENABLE_SAMPLE_DATA
+  ? process.env.ENABLE_SAMPLE_DATA === "true"
+  : process.env.NODE_ENV !== "production";
+
 router.post("/taxes/seed-sample", requireAuth, ensureUser, async (req, res): Promise<void> => {
+  if (!sampleDataEnabled) { res.status(404).json({ error: "Not found" }); return; }
   const user = (req as any).user;
   await db.delete(propertyTaxesTable).where(eq(propertyTaxesTable.userId, user.id));
   await db.delete(waterTaxesTable).where(eq(waterTaxesTable.userId, user.id));
@@ -200,9 +207,11 @@ router.get("/taxes/property", requireAuth, ensureUser, async (req, res): Promise
 });
 
 router.post("/taxes/property", requireAuth, ensureUser, async (req, res): Promise<void> => {
+  const parsed = CreatePropertyTaxBody.safeParse(req.body ?? {});
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
-  const { propertyId, propertyAddress, propertyType, areaSqFt } = req.body;
-  const area = Number(areaSqFt || 1200);
+  const { propertyId, propertyAddress, propertyType, areaSqFt } = parsed.data;
+  const area = areaSqFt ?? 1200;
   const assessedValue = area * (propertyType === "commercial" ? 350 : 200);
   const taxRate = propertyType === "commercial" ? 0.015 : 0.012;
   const taxAmount = Math.round(assessedValue * taxRate * 100) / 100;
@@ -271,9 +280,11 @@ router.get("/taxes/water", requireAuth, ensureUser, async (req, res): Promise<vo
 });
 
 router.post("/taxes/water", requireAuth, ensureUser, async (req, res): Promise<void> => {
+  const parsed = CreateWaterTaxBody.safeParse(req.body ?? {});
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
   const user = (req as any).user;
-  const { connectionId, connectionAddress, unitsConsumed } = req.body;
-  const units = Number(unitsConsumed || 100);
+  const { connectionId, connectionAddress, unitsConsumed } = parsed.data;
+  const units = unitsConsumed ?? 100;
   const ratePerUnit = 15.00;
   const taxAmount = Math.round(units * ratePerUnit * 100) / 100;
   const dueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

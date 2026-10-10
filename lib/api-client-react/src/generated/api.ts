@@ -85,6 +85,7 @@ import type {
   PaymentReceipt,
   ProfileUpdate,
   PropertyTax,
+  PropertyTaxInput,
   PropertyTaxListResponse,
   RevenueReport,
   ServicesReport,
@@ -96,6 +97,7 @@ import type {
   UnreadCount,
   UserProfile,
   WaterTax,
+  WaterTaxInput,
   WaterTaxListResponse
 } from './api.schemas';
 
@@ -1202,6 +1204,77 @@ export function useListPropertyTaxes<TData = Awaited<ReturnType<typeof listPrope
 
 
 
+export const getCreatePropertyTaxUrl = () => {
+
+
+
+
+  return `/api/taxes/property`
+}
+
+/**
+ * @summary Link a property and generate its tax bill
+ */
+export const createPropertyTax = async (propertyTaxInput: PropertyTaxInput, options?: RequestInit): Promise<PropertyTax> => {
+
+  return customFetch<PropertyTax>(getCreatePropertyTaxUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(propertyTaxInput)
+  }
+);}
+
+
+
+
+
+export const getCreatePropertyTaxMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPropertyTax>>, TError,{data: BodyType<PropertyTaxInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createPropertyTax>>, TError,{data: BodyType<PropertyTaxInput>}, TContext> => {
+
+const mutationKey = ['createPropertyTax'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createPropertyTax>>, {data: BodyType<PropertyTaxInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createPropertyTax(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreatePropertyTaxMutationResult = NonNullable<Awaited<ReturnType<typeof createPropertyTax>>>
+    export type CreatePropertyTaxMutationBody = BodyType<PropertyTaxInput>
+    export type CreatePropertyTaxMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Link a property and generate its tax bill
+ */
+export const useCreatePropertyTax = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createPropertyTax>>, TError,{data: BodyType<PropertyTaxInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createPropertyTax>>,
+        TError,
+        {data: BodyType<PropertyTaxInput>},
+        TContext
+      > => {
+      return useMutation(getCreatePropertyTaxMutationOptions(options));
+    }
+
 export const getGetPropertyTaxUrl = (id: string,) => {
 
 
@@ -1435,6 +1508,77 @@ export function useListWaterTaxes<TData = Awaited<ReturnType<typeof listWaterTax
 
 
 
+export const getCreateWaterTaxUrl = () => {
+
+
+
+
+  return `/api/taxes/water`
+}
+
+/**
+ * @summary Link a water connection and generate its bill
+ */
+export const createWaterTax = async (waterTaxInput: WaterTaxInput, options?: RequestInit): Promise<WaterTax> => {
+
+  return customFetch<WaterTax>(getCreateWaterTaxUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(waterTaxInput)
+  }
+);}
+
+
+
+
+
+export const getCreateWaterTaxMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWaterTax>>, TError,{data: BodyType<WaterTaxInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createWaterTax>>, TError,{data: BodyType<WaterTaxInput>}, TContext> => {
+
+const mutationKey = ['createWaterTax'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createWaterTax>>, {data: BodyType<WaterTaxInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createWaterTax(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateWaterTaxMutationResult = NonNullable<Awaited<ReturnType<typeof createWaterTax>>>
+    export type CreateWaterTaxMutationBody = BodyType<WaterTaxInput>
+    export type CreateWaterTaxMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Link a water connection and generate its bill
+ */
+export const useCreateWaterTax = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createWaterTax>>, TError,{data: BodyType<WaterTaxInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createWaterTax>>,
+        TError,
+        {data: BodyType<WaterTaxInput>},
+        TContext
+      > => {
+      return useMutation(getCreateWaterTaxMutationOptions(options));
+    }
+
 export const getGetWaterTaxUrl = (id: string,) => {
 
 
@@ -1582,6 +1726,77 @@ export const usePayWaterTax = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getPayWaterTaxMutationOptions(options));
+    }
+
+export const getSeedSampleTaxesUrl = () => {
+
+
+
+
+  return `/api/taxes/seed-sample`
+}
+
+/**
+ * @summary Replace the current user's tax bills with sample data
+ */
+export const seedSampleTaxes = async ( options?: RequestInit): Promise<MessageResponse> => {
+
+  return customFetch<MessageResponse>(getSeedSampleTaxesUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getSeedSampleTaxesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof seedSampleTaxes>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof seedSampleTaxes>>, TError,void, TContext> => {
+
+const mutationKey = ['seedSampleTaxes'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof seedSampleTaxes>>, void> = () => {
+
+
+          return  seedSampleTaxes(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SeedSampleTaxesMutationResult = NonNullable<Awaited<ReturnType<typeof seedSampleTaxes>>>
+
+    export type SeedSampleTaxesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Replace the current user's tax bills with sample data
+ */
+export const useSeedSampleTaxes = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof seedSampleTaxes>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof seedSampleTaxes>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getSeedSampleTaxesMutationOptions(options));
     }
 
 export const getGetTaxSummaryUrl = () => {
@@ -1964,6 +2179,83 @@ export const useUpdateCertificate = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUpdateCertificateMutationOptions(options));
     }
+
+export const getDownloadCertificateUrl = (id: string,) => {
+
+
+
+
+  return `/api/certificates/${id}/download`
+}
+
+/**
+ * @summary Download an approved certificate as printable HTML
+ */
+export const downloadCertificate = async (id: string, options?: RequestInit): Promise<string> => {
+
+  return customFetch<string>(getDownloadCertificateUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getDownloadCertificateQueryKey = (id: string,) => {
+    return [
+    `/api/certificates/${id}/download`
+    ] as const;
+    }
+
+
+export const getDownloadCertificateQueryOptions = <TData = Awaited<ReturnType<typeof downloadCertificate>>, TError = ErrorType<unknown>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadCertificate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadCertificateQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadCertificate>>> = ({ signal }) => downloadCertificate(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadCertificate>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type DownloadCertificateQueryResult = NonNullable<Awaited<ReturnType<typeof downloadCertificate>>>
+export type DownloadCertificateQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download an approved certificate as printable HTML
+ */
+
+export function useDownloadCertificate<TData = Awaited<ReturnType<typeof downloadCertificate>>, TError = ErrorType<unknown>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof downloadCertificate>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getDownloadCertificateQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListGarbageRequestsUrl = (params?: ListGarbageRequestsParams,) => {
   const normalizedParams = new URLSearchParams();

@@ -475,6 +475,44 @@ export const ListPropertyTaxesResponse = zod.object({
 
 
 /**
+ * @summary Link a property and generate its tax bill
+ */
+export const createPropertyTaxBodyPropertyIdMax = 64;
+
+export const createPropertyTaxBodyPropertyAddressMax = 500;
+
+export const createPropertyTaxBodyAreaSqFtExclusiveMin = 0;
+export const createPropertyTaxBodyAreaSqFtMax = 1000000;
+
+
+
+export const CreatePropertyTaxBody = zod.object({
+  "propertyId": zod.string().max(createPropertyTaxBodyPropertyIdMax).optional(),
+  "propertyAddress": zod.string().max(createPropertyTaxBodyPropertyAddressMax).optional(),
+  "propertyType": zod.enum(['residential', 'commercial', 'industrial']).optional(),
+  "areaSqFt": zod.number().gt(createPropertyTaxBodyAreaSqFtExclusiveMin).max(createPropertyTaxBodyAreaSqFtMax).optional()
+})
+
+export const CreatePropertyTaxResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "propertyId": zod.string(),
+  "propertyAddress": zod.string(),
+  "propertyType": zod.enum(['residential', 'commercial', 'industrial']),
+  "assessedValue": zod.number(),
+  "taxRate": zod.number(),
+  "taxAmount": zod.number(),
+  "penaltyAmount": zod.number(),
+  "totalDue": zod.number(),
+  "dueDate": zod.coerce.date(),
+  "status": zod.enum(['pending', 'paid', 'overdue']),
+  "financialYear": zod.string(),
+  "paidAt": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Get property tax bill by ID
  */
 export const GetPropertyTaxParams = zod.object({
@@ -563,6 +601,44 @@ export const ListWaterTaxesResponse = zod.object({
 
 
 /**
+ * @summary Link a water connection and generate its bill
+ */
+export const createWaterTaxBodyConnectionIdMax = 64;
+
+export const createWaterTaxBodyConnectionAddressMax = 500;
+
+export const createWaterTaxBodyUnitsConsumedMin = 0;
+export const createWaterTaxBodyUnitsConsumedMax = 1000000;
+
+
+
+export const CreateWaterTaxBody = zod.object({
+  "connectionId": zod.string().max(createWaterTaxBodyConnectionIdMax).optional(),
+  "connectionAddress": zod.string().max(createWaterTaxBodyConnectionAddressMax).optional(),
+  "unitsConsumed": zod.number().min(createWaterTaxBodyUnitsConsumedMin).max(createWaterTaxBodyUnitsConsumedMax).optional()
+})
+
+export const CreateWaterTaxResponse = zod.object({
+  "id": zod.string(),
+  "userId": zod.string(),
+  "connectionId": zod.string(),
+  "connectionAddress": zod.string(),
+  "meterReading": zod.number(),
+  "previousReading": zod.number(),
+  "unitsConsumed": zod.number(),
+  "ratePerUnit": zod.number(),
+  "taxAmount": zod.number(),
+  "penaltyAmount": zod.number(),
+  "totalDue": zod.number(),
+  "billingPeriod": zod.string(),
+  "dueDate": zod.coerce.date(),
+  "status": zod.enum(['pending', 'paid', 'overdue']),
+  "paidAt": zod.string().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Get water tax bill by ID
  */
 export const GetWaterTaxParams = zod.object({
@@ -608,6 +684,14 @@ export const PayWaterTaxResponse = zod.object({
   "paymentMethod": zod.string(),
   "status": zod.string(),
   "paidAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Replace the current user's tax bills with sample data
+ */
+export const SeedSampleTaxesResponse = zod.object({
+  "message": zod.string()
 })
 
 
@@ -756,6 +840,16 @@ export const UpdateCertificateResponse = zod.object({
   "createdAt": zod.coerce.date(),
   "updatedAt": zod.coerce.date()
 })
+
+
+/**
+ * @summary Download an approved certificate as printable HTML
+ */
+export const DownloadCertificateParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const DownloadCertificateResponse = zod.unknown()
 
 
 /**
@@ -1525,12 +1619,12 @@ export const GetFeedbackStatsResponse = zod.object({
  * @summary Send a message to the AI citizen assistant
  */
 
-
+export const sendChatMessageBodyLanguageDefault = `en`;
 
 export const SendChatMessageBody = zod.object({
   "message": zod.string().min(1),
   "sessionId": zod.string().nullish(),
-  "language": zod.enum(["en", "ta"]).default("en")
+  "language": zod.enum(['en', 'ta']).default(sendChatMessageBodyLanguageDefault)
 })
 
 export const SendChatMessageResponse = zod.object({

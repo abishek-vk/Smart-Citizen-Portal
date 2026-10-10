@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react"
-import { useListPropertyTaxes, useListWaterTaxes, useGetTaxSummary, usePayPropertyTax, usePayWaterTax } from "@workspace/api-client-react"
-import { customFetch } from "@/lib/api"
+import { useListPropertyTaxes, useListWaterTaxes, useGetTaxSummary, usePayPropertyTax, usePayWaterTax, createPropertyTax, createWaterTax, seedSampleTaxes, type PropertyTaxInputPropertyType } from "@workspace/api-client-react"
 import { PageHeader } from "@/components/layout/main-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -448,15 +447,11 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
   const handleCreateProperty = async () => {
     setLoading(true)
     try {
-      await customFetch('/api/taxes/property', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          propertyId: propId || undefined,
-          propertyAddress: address || undefined,
-          propertyType: propType,
-          areaSqFt: area,
-        })
+      await createPropertyTax({
+        propertyId: propId || undefined,
+        propertyAddress: address || undefined,
+        propertyType: propType as PropertyTaxInputPropertyType,
+        areaSqFt: area,
       })
       toast({ title: "Property Registered", description: "New property tax assessment bill added to your account." })
       setOpen(false)
@@ -471,14 +466,10 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
   const handleCreateWater = async () => {
     setLoading(true)
     try {
-      await customFetch('/api/taxes/water', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          connectionId: waterConnId || undefined,
-          connectionAddress: waterAddress || undefined,
-          unitsConsumed: units,
-        })
+      await createWaterTax({
+        connectionId: waterConnId || undefined,
+        connectionAddress: waterAddress || undefined,
+        unitsConsumed: units,
       })
       toast({ title: "Water Connection Linked", description: "Water service bill generated for your account." })
       setOpen(false)
@@ -593,6 +584,11 @@ function LinkPropertyModal({ onRefresh }: { onRefresh: () => void }) {
   )
 }
 
+// Sample-data reset wipes the user's bills, so it is only offered in demo builds.
+const sampleDataEnabled = import.meta.env.VITE_ENABLE_SAMPLE_DATA
+  ? import.meta.env.VITE_ENABLE_SAMPLE_DATA === 'true'
+  : import.meta.env.DEV
+
 // --- Main Taxes Page ---
 export default function Taxes() {
   const { data: summary, isLoading: loadingSummary } = useGetTaxSummary()
@@ -609,7 +605,7 @@ export default function Taxes() {
   const handleResetSampleData = async () => {
     setIsResetting(true)
     try {
-      await customFetch('/api/taxes/seed-sample', { method: 'POST' })
+      await seedSampleTaxes()
       toast({ title: "Sample Data Reset", description: "Populated property and water tax sample bills." })
       queryClient.invalidateQueries({ queryKey: getListPropertyTaxesQueryKey() })
       queryClient.invalidateQueries({ queryKey: getListWaterTaxesQueryKey() })
@@ -655,17 +651,19 @@ export default function Taxes() {
         <div className="flex flex-wrap items-center gap-2">
           <TaxCalculatorModal />
           <LinkPropertyModal onRefresh={handleRefresh} />
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleResetSampleData} 
-            disabled={isResetting}
-            title="Reset sample tax data"
-            className="gap-1.5 text-xs text-muted-foreground"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
-            Demo Data
-          </Button>
+          {sampleDataEnabled && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleResetSampleData} 
+              disabled={isResetting}
+              title="Reset sample tax data"
+              className="gap-1.5 text-xs text-muted-foreground"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+              Demo Data
+            </Button>
+          )}
         </div>
       </div>
 
@@ -765,11 +763,13 @@ export default function Taxes() {
                     ? "No records match your selected search or status filter." 
                     : "No property tax assessment bills are associated with your account yet."}
                 </p>
-                <div className="pt-2 flex justify-center gap-2">
-                  <Button size="sm" onClick={handleResetSampleData} variant="outline" className="gap-2">
-                    <RefreshCw className="w-4 h-4" /> Seed Sample Property Bills
-                  </Button>
-                </div>
+                {sampleDataEnabled && (
+                  <div className="pt-2 flex justify-center gap-2">
+                    <Button size="sm" onClick={handleResetSampleData} variant="outline" className="gap-2">
+                      <RefreshCw className="w-4 h-4" /> Seed Sample Property Bills
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -854,11 +854,13 @@ export default function Taxes() {
                     ? "No records match your selected search or status filter." 
                     : "No water connection bills are currently linked to your account."}
                 </p>
-                <div className="pt-2 flex justify-center gap-2">
-                  <Button size="sm" onClick={handleResetSampleData} variant="outline" className="gap-2">
-                    <RefreshCw className="w-4 h-4" /> Seed Sample Water Bills
-                  </Button>
-                </div>
+                {sampleDataEnabled && (
+                  <div className="pt-2 flex justify-center gap-2">
+                    <Button size="sm" onClick={handleResetSampleData} variant="outline" className="gap-2">
+                      <RefreshCw className="w-4 h-4" /> Seed Sample Water Bills
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ) : (

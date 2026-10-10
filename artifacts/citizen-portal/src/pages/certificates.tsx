@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { PageHeader } from "@/components/layout/main-layout"
-import { useListCertificates, useApplyCertificate, getListCertificatesQueryKey, useGetProfile } from "@workspace/api-client-react"
-import { customFetch } from "@/lib/api"
+import { useListCertificates, useApplyCertificate, getListCertificatesQueryKey, useGetProfile, downloadCertificate } from "@workspace/api-client-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -46,7 +45,7 @@ export default function Certificates() {
     // authenticated fetch (which carries the Bearer token) returns.
     const win = window.open('', '_blank')
     try {
-      const html = await customFetch<string>(`/api/certificates/${certId}/download`, { responseType: 'text' })
+      const html = await downloadCertificate(certId)
       const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }))
       if (win) win.location.href = url
       else window.open(url, '_blank')

@@ -149,18 +149,30 @@ router.get("/dashboard/complaint-trends", requireAuth, ensureUser, async (req, r
 
   const start = new Date();
   start.setUTCHours(0, 0, 0, 0);
-  start.setUTCDate(start.getUTCDate() - (days - 1));
-  const complaintDay = sql<string>`to_char(${complaintsTable.createdAt}::date, 'YYYY-MM-DD')`;
-  const rows = await db.select({ date: complaintDay, value: count() })
+  if (period === "1y") {
+    start.setUTCDate(1);
+    start.setUTCMonth(start.getUTCMonth() - 11);
+  } else {
+    start.setUTCDate(start.getUTCDate() - (days - 1));
+  }
+  const bucket = period === "1y"
+    ? sql<string>`to_char(${complaintsTable.createdAt}, 'YYYY-MM')`
+    : sql<string>`to_char(${complaintsTable.createdAt}::date, 'YYYY-MM-DD')`;
+  const rows = await db.select({ date: bucket, value: count() })
     .from(complaintsTable)
     .where(gte(complaintsTable.createdAt, start))
-    .groupBy(complaintDay);
-  const countsByDay = new Map(rows.map(row => [row.date, Number(row.value)]));
-  const trends = Array.from({ length: days }, (_, i) => {
+    .groupBy(bucket);
+  const countsByBucket = new Map(rows.map(row => [row.date, Number(row.value)]));
+  const trends = Array.from({ length: period === "1y" ? 12 : days }, (_, i) => {
     const d = new Date(start);
+    if (period === "1y") {
+      d.setUTCMonth(d.getUTCMonth() + i);
+      const month = d.toISOString().slice(0, 7);
+      return { date: `${month}-01`, value: countsByBucket.get(month) ?? 0 };
+    }
     d.setUTCDate(d.getUTCDate() + i);
     const date = d.toISOString().split("T")[0];
-    return { date, value: countsByDay.get(date) ?? 0 };
+    return { date, value: countsByBucket.get(date) ?? 0 };
   });
 
   res.json(trends);
