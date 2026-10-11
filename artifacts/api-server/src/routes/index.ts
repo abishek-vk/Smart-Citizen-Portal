@@ -9,6 +9,7 @@ import garbageRouter from "./garbage";
 import parkingRouter from "./parking";
 import servicesRouter from "./services";
 import aiRouter from "./ai";
+import gatewayRouter from "./gateway";
 
 const router = Router();
 
@@ -25,5 +26,6 @@ router.use(garbageRouter);
 router.use(parkingRouter);
 router.use(servicesRouter);
 router.use(aiRouter);
+router.use(gatewayRouter);
 
 export default router;

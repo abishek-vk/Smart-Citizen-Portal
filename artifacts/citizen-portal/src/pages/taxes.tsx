@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react"
-import { useListPropertyTaxes, useListWaterTaxes, useGetTaxSummary, usePayPropertyTax, usePayWaterTax, createPropertyTax, createWaterTax, seedSampleTaxes, type PropertyTaxInputPropertyType } from "@workspace/api-client-react"
+import { useListPropertyTaxes, useListWaterTaxes, useGetTaxSummary, createPropertyTax, createWaterTax, seedSampleTaxes, type PropertyTaxInputPropertyType } from "@workspace/api-client-react"
 import { PageHeader } from "@/components/layout/main-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useQueryClient } from "@tanstack/react-query"
-import { getListPropertyTaxesQueryKey, getListWaterTaxesQueryKey, getGetTaxSummaryQueryKey } from "@workspace/api-client-react"
+import { getListPropertyTaxesQueryKey, getListWaterTaxesQueryKey, getGetTaxSummaryQueryKey, getListPaymentsQueryKey, type GatewayPaymentResult } from "@workspace/api-client-react"
+import { PaymentCheckout } from "@/components/payment-checkout"
 import { format } from "date-fns"
 import { 
   Receipt, Download, Home, Droplets, CheckCircle2, AlertTriangle, 
@@ -20,174 +21,33 @@ import {
   Printer, ShieldCheck, ArrowRight, RefreshCw, FileText
 } from "lucide-react"
 
-// --- Helper UI: Credit Card Icon ---
-function CreditCardIcon(props: any) {
-  return (
-    <svg xmlns="http://www.svg.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect width="20" height="14" x="2" y="5" rx="2" />
-      <line x1="2" x2="22" y1="10" y2="10" />
-    </svg>
-  )
-}
-
-// --- Payment Modal Component ---
+// --- Payment Modal: opens the sandbox gateway checkout ---
 function PaymentModal({ bill, type }: { bill: any, type: 'property' | 'water' }) {
   const [open, setOpen] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<'credit_card' | 'upi' | 'net_banking'>('credit_card')
   const { toast } = useToast()
   const queryClient = useQueryClient()
-  
-  const payProperty = usePayPropertyTax()
-  const payWater = usePayWaterTax()
-  
-  const mutation = type === 'property' ? payProperty : payWater
-  
-  const handlePay = () => {
-    mutation.mutate({ id: bill.id, data: { paymentMethod } }, {
-      onSuccess: (res: any) => {
-        toast({ 
-          title: "Payment Successful", 
-          description: `Paid ₹${bill.totalDue.toFixed(2)} via ${paymentMethod.toUpperCase()}. Receipt: ${res?.receiptNumber || 'Generated'}` 
-        })
-        queryClient.invalidateQueries({ queryKey: type === 'property' ? getListPropertyTaxesQueryKey() : getListWaterTaxesQueryKey() })
-        queryClient.invalidateQueries({ queryKey: getGetTaxSummaryQueryKey() })
-        setOpen(false)
-      },
-      onError: () => {
-        toast({ title: "Payment Failed", description: "Could not process transaction. Please try again.", variant: "destructive" })
-      }
+
+  const handlePaid = (res: GatewayPaymentResult) => {
+    toast({
+      title: "Payment Successful",
+      description: `Paid ₹${res.amount.toFixed(2)} via ${res.methodDetail}. Receipt: ${res.receiptNumber}`,
     })
+    queryClient.invalidateQueries({ queryKey: type === 'property' ? getListPropertyTaxesQueryKey() : getListWaterTaxesQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getGetTaxSummaryQueryKey() })
+    queryClient.invalidateQueries({ queryKey: getListPaymentsQueryKey() })
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" className="w-full font-medium">Pay Now</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-500" />
-            Secure Municipal Payment
-          </DialogTitle>
-          <DialogDescription>
-            Complete payment for your {type === 'property' ? 'Property Tax' : 'Water Service'} bill.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="py-4 space-y-5">
-          {/* Bill Summary Card */}
-          <div className="bg-accent/60 p-4 rounded-xl border border-primary/20 flex justify-between items-center">
-            <div>
-              <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
-                {type === 'property' ? 'Property Tax Bill' : 'Water Utility Bill'}
-              </p>
-              <p className="text-sm font-semibold">{type === 'property' ? bill.propertyId : bill.connectionId}</p>
-              <p className="text-xs text-muted-foreground truncate max-w-[220px]">
-                {type === 'property' ? bill.propertyAddress : bill.connectionAddress}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-extrabold text-foreground font-serif">₹{bill.totalDue.toFixed(2)}</p>
-              {bill.penaltyAmount > 0 && (
-                <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
-                  Incl. ₹{bill.penaltyAmount.toFixed(2)} late fee
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Payment Method Selector */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Select Payment Option</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('credit_card')}
-                className={`p-3 rounded-lg border text-left transition-all flex flex-col items-center gap-1.5 ${
-                  paymentMethod === 'credit_card' 
-                    ? 'border-primary bg-primary/10 text-primary font-semibold ring-2 ring-primary/20' 
-                    : 'border-border hover:bg-muted/50 text-muted-foreground'
-                }`}
-              >
-                <CreditCard className="w-5 h-5" />
-                <span className="text-xs">Card</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('upi')}
-                className={`p-3 rounded-lg border text-left transition-all flex flex-col items-center gap-1.5 ${
-                  paymentMethod === 'upi' 
-                    ? 'border-primary bg-primary/10 text-primary font-semibold ring-2 ring-primary/20' 
-                    : 'border-border hover:bg-muted/50 text-muted-foreground'
-                }`}
-              >
-                <QrCode className="w-5 h-5" />
-                <span className="text-xs">UPI / QR</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setPaymentMethod('net_banking')}
-                className={`p-3 rounded-lg border text-left transition-all flex flex-col items-center gap-1.5 ${
-                  paymentMethod === 'net_banking' 
-                    ? 'border-primary bg-primary/10 text-primary font-semibold ring-2 ring-primary/20' 
-                    : 'border-border hover:bg-muted/50 text-muted-foreground'
-                }`}
-              >
-                <Building2 className="w-5 h-5" />
-                <span className="text-xs">Net Banking</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Method Specific Content */}
-          {paymentMethod === 'credit_card' && (
-            <div className="border rounded-lg p-3 bg-muted/30 space-y-2 text-xs">
-              <div className="flex justify-between items-center font-medium">
-                <span>Visa / MasterCard ending in 4242</span>
-                <Badge variant="outline" className="text-[10px]">Instant</Badge>
-              </div>
-              <p className="text-muted-foreground">Encrypted with 256-bit SSL Municipal Gateway</p>
-            </div>
-          )}
-
-          {paymentMethod === 'upi' && (
-            <div className="border rounded-lg p-3 bg-muted/30 text-center space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Scan QR or enter Virtual Payment Address (VPA)</p>
-              <div className="bg-white p-2 rounded inline-block shadow-sm">
-                <QrCode className="w-20 h-20 text-slate-800 mx-auto" />
-              </div>
-              <p className="text-[11px] text-muted-foreground">e.g. citizen@smartbank</p>
-            </div>
-          )}
-
-          {paymentMethod === 'net_banking' && (
-            <div className="border rounded-lg p-3 bg-muted/30 space-y-2">
-              <p className="text-xs font-medium text-muted-foreground">Choose Bank</p>
-              <Select defaultValue="hdfc">
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select bank" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="hdfc">State Bank of India / HDFC Bank</SelectItem>
-                  <SelectItem value="icici">ICICI Bank</SelectItem>
-                  <SelectItem value="axis">Axis Bank</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter className="gap-2">
-          <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button size="sm" onClick={handlePay} disabled={mutation.isPending} className="gap-2">
-            {mutation.isPending ? "Processing..." : `Confirm & Pay ₹${bill.totalDue.toFixed(2)}`}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Button size="sm" className="w-full font-medium" onClick={() => setOpen(true)}>Pay Now</Button>
+      <PaymentCheckout
+        open={open}
+        onOpenChange={setOpen}
+        purpose={type === 'property' ? 'property_tax' : 'water_tax'}
+        referenceId={bill.id}
+        onPaid={handlePaid}
+      />
+    </>
   )
 }
 

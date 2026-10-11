@@ -834,6 +834,106 @@ export interface PaymentListResponse {
   pagination: PaginationMeta;
 }
 
+export type GatewayOrderInputPurpose = typeof GatewayOrderInputPurpose[keyof typeof GatewayOrderInputPurpose];
+
+
+export const GatewayOrderInputPurpose = {
+  property_tax: 'property_tax',
+  water_tax: 'water_tax',
+} as const;
+
+export interface GatewayOrderInput {
+  purpose: GatewayOrderInputPurpose;
+  referenceId: string;
+}
+
+export interface GatewayOrder {
+  orderId: string;
+  token: string;
+  amount: number;
+  currency: string;
+  description: string;
+  merchant: string;
+  expiresAt: string;
+  testMode: boolean;
+}
+
+export type GatewayPaymentInputMethod = typeof GatewayPaymentInputMethod[keyof typeof GatewayPaymentInputMethod];
+
+
+export const GatewayPaymentInputMethod = {
+  card: 'card',
+  upi: 'upi',
+  net_banking: 'net_banking',
+} as const;
+
+export type GatewayPaymentInputCard = {
+  number: string;
+  /** MM/YY */
+  expiry: string;
+  cvv: string;
+  name: string;
+};
+
+/**
+ * Outcome chosen on the simulated bank page
+ */
+export type GatewayPaymentInputBankOutcome = typeof GatewayPaymentInputBankOutcome[keyof typeof GatewayPaymentInputBankOutcome];
+
+
+export const GatewayPaymentInputBankOutcome = {
+  success: 'success',
+  failure: 'failure',
+} as const;
+
+export interface GatewayPaymentInput {
+  token: string;
+  method: GatewayPaymentInputMethod;
+  card?: GatewayPaymentInputCard;
+  otp?: string;
+  upiId?: string;
+  bank?: string;
+  /** Outcome chosen on the simulated bank page */
+  bankOutcome?: GatewayPaymentInputBankOutcome;
+}
+
+export interface GatewayPaymentResult {
+  paymentId: string;
+  orderId: string;
+  receiptNumber: string;
+  amount: number;
+  paymentMethod: string;
+  methodDetail: string;
+  status: string;
+  paidAt: string;
+}
+
+export type GatewayErrorCode = typeof GatewayErrorCode[keyof typeof GatewayErrorCode];
+
+
+export const GatewayErrorCode = {
+  card_declined: 'card_declined',
+  insufficient_funds: 'insufficient_funds',
+  invalid_card: 'invalid_card',
+  expired_card: 'expired_card',
+  invalid_otp: 'invalid_otp',
+  invalid_upi: 'invalid_upi',
+  upi_declined: 'upi_declined',
+  bank_declined: 'bank_declined',
+  invalid_bank: 'invalid_bank',
+  order_expired: 'order_expired',
+  invalid_order: 'invalid_order',
+  already_paid: 'already_paid',
+  not_found: 'not_found',
+} as const;
+
+export interface GatewayError {
+  error: string;
+  code: GatewayErrorCode;
+  retryable: boolean;
+  paymentId?: string;
+}
+
 export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
 
 

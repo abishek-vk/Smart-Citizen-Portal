@@ -50,6 +50,11 @@ import type {
   GarbageListResponse,
   GarbageRequest,
   GarbageUpdate,
+  GatewayError,
+  GatewayOrder,
+  GatewayOrderInput,
+  GatewayPaymentInput,
+  GatewayPaymentResult,
   GetChatHistoryParams,
   GetComplaintTrendsParams,
   GetRevenueReportParams,
@@ -3894,6 +3899,150 @@ export function useGetPayment<TData = Awaited<ReturnType<typeof getPayment>>, TE
 
 
 
+
+export const getCreateGatewayOrderUrl = () => {
+
+
+
+
+  return `/api/payments/gateway/orders`
+}
+
+/**
+ * Dummy gateway (test mode). The amount is always computed on the server from the bill. Returns a signed order token that must be passed to confirmGatewayPayment.
+ * @summary Create a sandbox payment order for a bill
+ */
+export const createGatewayOrder = async (gatewayOrderInput: GatewayOrderInput, options?: RequestInit): Promise<GatewayOrder> => {
+
+  return customFetch<GatewayOrder>(getCreateGatewayOrderUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(gatewayOrderInput)
+  }
+);}
+
+
+
+
+
+export const getCreateGatewayOrderMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGatewayOrder>>, TError,{data: BodyType<GatewayOrderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGatewayOrder>>, TError,{data: BodyType<GatewayOrderInput>}, TContext> => {
+
+const mutationKey = ['createGatewayOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGatewayOrder>>, {data: BodyType<GatewayOrderInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createGatewayOrder(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGatewayOrderMutationResult = NonNullable<Awaited<ReturnType<typeof createGatewayOrder>>>
+    export type CreateGatewayOrderMutationBody = BodyType<GatewayOrderInput>
+    export type CreateGatewayOrderMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a sandbox payment order for a bill
+ */
+export const useCreateGatewayOrder = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGatewayOrder>>, TError,{data: BodyType<GatewayOrderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGatewayOrder>>,
+        TError,
+        {data: BodyType<GatewayOrderInput>},
+        TContext
+      > => {
+      return useMutation(getCreateGatewayOrderMutationOptions(options));
+    }
+
+export const getConfirmGatewayPaymentUrl = () => {
+
+
+
+
+  return `/api/payments/gateway/confirm`
+}
+
+/**
+ * Simulates authorising the payment. Test card 4000 0000 0000 0002 is declined, 4000 0000 0000 9995 fails with insufficient funds, UPI ID failure@upi is declined, and the card OTP is always 123456. Failed attempts are recorded in payment history.
+ * @summary Pay a sandbox order
+ */
+export const confirmGatewayPayment = async (gatewayPaymentInput: GatewayPaymentInput, options?: RequestInit): Promise<GatewayPaymentResult> => {
+
+  return customFetch<GatewayPaymentResult>(getConfirmGatewayPaymentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(gatewayPaymentInput)
+  }
+);}
+
+
+
+
+
+export const getConfirmGatewayPaymentMutationOptions = <TError = ErrorType<GatewayError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmGatewayPayment>>, TError,{data: BodyType<GatewayPaymentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof confirmGatewayPayment>>, TError,{data: BodyType<GatewayPaymentInput>}, TContext> => {
+
+const mutationKey = ['confirmGatewayPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof confirmGatewayPayment>>, {data: BodyType<GatewayPaymentInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  confirmGatewayPayment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ConfirmGatewayPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof confirmGatewayPayment>>>
+    export type ConfirmGatewayPaymentMutationBody = BodyType<GatewayPaymentInput>
+    export type ConfirmGatewayPaymentMutationError = ErrorType<GatewayError>
+
+    /**
+ * @summary Pay a sandbox order
+ */
+export const useConfirmGatewayPayment = <TError = ErrorType<GatewayError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof confirmGatewayPayment>>, TError,{data: BodyType<GatewayPaymentInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof confirmGatewayPayment>>,
+        TError,
+        {data: BodyType<GatewayPaymentInput>},
+        TContext
+      > => {
+      return useMutation(getConfirmGatewayPaymentMutationOptions(options));
+    }
 
 export const getListNotificationsUrl = (params?: ListNotificationsParams,) => {
   const normalizedParams = new URLSearchParams();
