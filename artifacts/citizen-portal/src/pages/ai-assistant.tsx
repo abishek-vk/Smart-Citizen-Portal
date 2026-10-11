@@ -4,7 +4,9 @@ import { PageHeader } from "@/components/layout/main-layout"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Bot, User, Trash2, Sparkles } from "lucide-react"
+import { Send, User, Trash2, ArrowUpRight } from "lucide-react"
+import { motion } from "framer-motion"
+import { easeOutExpo } from "@/components/motion"
 import { useQueryClient } from "@tanstack/react-query"
 import { getGetChatHistoryQueryKey } from "@workspace/api-client-react"
 import { cn } from "@/lib/utils"
@@ -84,20 +86,21 @@ export default function AIAssistant() {
         </Button>
       </PageHeader>
 
-      <Card className="flex-1 flex flex-col overflow-hidden border-primary/20 shadow-md relative">
-        <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-900/[0.04] opacity-50 z-0 pointer-events-none" />
+      <Card className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="bg-street-grid absolute inset-0 z-0 pointer-events-none opacity-60 [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
         
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 z-10" ref={scrollRef}>
           {isLoading ? (
             <div className="flex items-center justify-center h-full text-muted-foreground">
-              <Bot className="w-8 h-8 animate-pulse opacity-50" />
+              <KarenAvatar className="h-10 w-10 animate-pulse" />
             </div>
           ) : history?.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-                <Sparkles className="w-8 h-8 text-primary" />
+              <div className="relative mb-6">
+                <KarenAvatar className="h-16 w-16 text-2xl" />
+                <span className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-2 border-card bg-emerald-500" />
               </div>
-              <h3 className="text-xl font-bold font-serif mb-2">Hi, I'm Karen! How can I help you?</h3>
+              <h3 className="font-display text-2xl font-normal tracking-[-0.03em] mb-2">Hi, I'm Karen! How can I help you?</h3>
               <p className="text-muted-foreground mb-8">I'm your Smart City AI Assistant. I can help you find information, navigate services, or answer questions about the city.</p>
               
               <div className="flex flex-wrap justify-center gap-2">
@@ -109,18 +112,25 @@ export default function AIAssistant() {
           ) : (
             <div className="space-y-6">
               {history?.map((msg) => (
-                <div key={msg.id} className={cn("flex gap-4 max-w-[85%]", msg.role === 'user' ? "ml-auto flex-row-reverse" : "")}>
+                <motion.div
+                  key={msg.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, ease: easeOutExpo }}
+                  className={cn("flex gap-3 max-w-[85%]", msg.role === 'user' ? "ml-auto flex-row-reverse" : "")}
+                >
+                  {msg.role === 'user' ? (
+                    <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-accent text-accent-foreground">
+                      <User className="w-4 h-4" />
+                    </div>
+                  ) : (
+                    <KarenAvatar className="h-8 w-8 text-sm" />
+                  )}
                   <div className={cn(
-                    "w-8 h-8 shrink-0 rounded-full flex items-center justify-center",
-                    msg.role === 'user' ? "bg-primary text-primary-foreground" : "bg-muted border border-border"
-                  )}>
-                    {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                  <div className={cn(
-                    "px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm",
+                    "px-4 py-3 rounded-2xl text-sm leading-relaxed",
                     msg.role === 'user' 
-                      ? "bg-primary text-primary-foreground rounded-tr-sm" 
-                      : "bg-card border rounded-tl-sm"
+                      ? "bg-primary text-primary-foreground rounded-tr-md" 
+                      : "bg-muted rounded-tl-md"
                   )}>
                     {msg.role === 'assistant' ? (
                       <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ol:my-1 prose-ul:my-1 prose-li:my-0.5">
@@ -130,17 +140,15 @@ export default function AIAssistant() {
                       msg.content
                     )}
                   </div>
-                </div>
+                </motion.div>
               ))}
               {sendMutation.isPending && (
-                <div className="flex gap-4 max-w-[85%]">
-                  <div className="w-8 h-8 shrink-0 rounded-full bg-muted border flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
-                  </div>
-                  <div className="px-4 py-3 rounded-2xl bg-card border rounded-tl-sm flex items-center gap-1.5 shadow-sm">
-                    <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" />
-                    <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    <span className="w-1.5 h-1.5 bg-primary/50 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                <div className="flex gap-3 max-w-[85%]">
+                  <KarenAvatar className="h-8 w-8 text-sm" />
+                  <div className="px-4 py-3 rounded-2xl bg-muted rounded-tl-md flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce" />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
                   </div>
                 </div>
               )}
@@ -154,15 +162,15 @@ export default function AIAssistant() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask anything..." 
-              className="pr-12 h-12 rounded-xl border-primary/20 focus-visible:ring-primary shadow-sm bg-background/50"
+              className="pr-14 h-12 rounded-full pl-5 bg-background"
             />
             <Button 
               type="submit" 
               size="icon" 
-              className="absolute right-1.5 h-9 w-9 rounded-lg"
+              className="absolute right-1.5 h-9 w-9 rounded-full"
               disabled={!input.trim() || sendMutation.isPending}
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 -translate-x-px translate-y-px" />
             </Button>
           </form>
         </div>
@@ -175,9 +183,21 @@ function BadgeButton({ children, onClick }: { children: React.ReactNode, onClick
   return (
     <button 
       onClick={onClick}
-      className="px-3 py-1.5 text-xs bg-muted hover:bg-primary/10 hover:text-primary transition-colors border rounded-full font-medium"
+      className="group inline-flex items-center gap-1.5 rounded-full border bg-card px-3.5 py-2 text-xs font-medium transition-colors hover:border-primary/40 hover:bg-accent hover:text-accent-foreground"
     >
       {children}
+      <ArrowUpRight className="h-3 w-3 opacity-50 transition-transform group-hover:-translate-y-px group-hover:translate-x-px group-hover:opacity-100" />
     </button>
+  )
+}
+
+function KarenAvatar({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("flex shrink-0 items-center justify-center rounded-full bg-secondary font-display font-bold text-secondary-foreground", className)}
+      data-no-translate="true"
+    >
+      K
+    </div>
   )
 }

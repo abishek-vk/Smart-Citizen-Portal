@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Plus, MapPin, Sparkles, Filter, MoreHorizontal, AlertCircle } from "lucide-react"
+import { Plus, MapPin, ScanSearch, Filter, MoreHorizontal, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 import { LocationMapPlaceholder } from "@/components/ui/map-placeholder"
 import { useQueryClient } from "@tanstack/react-query"
@@ -211,11 +211,11 @@ function ComplaintCard({ complaint }: { complaint: any }) {
             disabled={analyzing || !!complaint.aiCategory}
           >
             {complaint.aiCategory ? (
-              <><Sparkles className="w-3.5 h-3.5 fill-primary/20" /> Analyzed</>
+              <><ScanSearch className="w-3.5 h-3.5" /> Analyzed</>
             ) : analyzing ? (
               "Analyzing..."
             ) : (
-              <><Sparkles className="w-3.5 h-3.5" /> AI Assist</>
+              <><ScanSearch className="w-3.5 h-3.5" /> AI Assist</>
             )}
           </Button>
         </div>

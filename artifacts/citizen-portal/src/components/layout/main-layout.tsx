@@ -1,18 +1,17 @@
 import * as React from "react"
-import { 
-  Building2, 
-  LayoutDashboard, 
-  AlertCircle, 
-  FileText, 
-  FileBadge, 
-  Trash2, 
-  Car, 
-  Bus, 
-  TreePine, 
-  Library, 
-  CreditCard, 
-  Bell, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  AlertCircle,
+  FileText,
+  FileBadge,
+  Trash2,
+  Car,
+  Bus,
+  TreePine,
+  Library,
+  CreditCard,
+  Bell,
+  MessageSquare,
   Star,
   Users,
   BarChart3,
@@ -21,142 +20,241 @@ import {
   Moon,
   Sun,
   LogOut,
-  ChevronRight,
+  ArrowRight,
+  X,
   User as UserIcon,
   Languages
 } from "lucide-react"
 import { Link, useLocation } from "wouter"
+import { motion } from "framer-motion"
+import { format } from "date-fns"
 import { useGetProfile, useGetUnreadNotificationCount } from "@workspace/api-client-react"
 import { useTheme } from "@/components/theme-provider"
 import { useLanguage } from "@/components/language-provider"
 import { useClerk, useUser } from "@clerk/react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { BrandMark } from "@/components/brand"
+import { easeOutExpo } from "@/components/motion"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-const citizenNavItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/profile", label: "My Profile", icon: UserIcon },
-  { href: "/complaints", label: "Complaints", icon: AlertCircle },
-  { href: "/taxes", label: "Taxes", icon: FileText },
-  { href: "/certificates", label: "Certificates", icon: FileBadge },
-  { href: "/garbage", label: "Garbage", icon: Trash2 },
-  { href: "/parking", label: "Parking", icon: Car },
-  { href: "/transport", label: "Transport", icon: Bus },
-  { href: "/parks", label: "Parks", icon: TreePine },
-  { href: "/libraries", label: "Libraries", icon: Library },
-  { href: "/payments", label: "Payments", icon: CreditCard },
-  { href: "/notifications", label: "Notifications", icon: Bell, badge: true },
-  { href: "/ai-assistant", label: "Karen", icon: MessageSquare },
-  { href: "/feedback", label: "Feedback", icon: Star },
+type NavItem = { href: string; label: string; icon: React.ComponentType<{ className?: string }>; badge?: boolean }
+type NavGroup = { label: string; items: NavItem[] }
+
+const citizenNav: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { href: "/notifications", label: "Notifications", icon: Bell, badge: true },
+      { href: "/profile", label: "My Profile", icon: UserIcon },
+    ],
+  },
+  {
+    label: "Services",
+    items: [
+      { href: "/complaints", label: "Complaints", icon: AlertCircle },
+      { href: "/taxes", label: "Taxes", icon: FileText },
+      { href: "/certificates", label: "Certificates", icon: FileBadge },
+      { href: "/payments", label: "Payments", icon: CreditCard },
+      { href: "/garbage", label: "Garbage", icon: Trash2 },
+      { href: "/parking", label: "Parking", icon: Car },
+      { href: "/transport", label: "Transport", icon: Bus },
+      { href: "/parks", label: "Parks", icon: TreePine },
+      { href: "/libraries", label: "Libraries", icon: Library },
+    ],
+  },
+  {
+    label: "Help",
+    items: [
+      { href: "/ai-assistant", label: "Karen", icon: MessageSquare },
+      { href: "/feedback", label: "Feedback", icon: Star },
+    ],
+  },
 ]
 
-const adminNavItems = [
-  { href: "/admin", label: "Admin Dashboard", icon: BarChart3 },
-  { href: "/admin/complaints", label: "Manage Complaints", icon: AlertCircle },
-  { href: "/admin/citizens", label: "Citizens", icon: Users },
-  { href: "/admin/certificates", label: "Certificates Queue", icon: FileBadge },
-  { href: "/admin/reports", label: "Reports", icon: ClipboardList },
-  { href: "/admin/audit-logs", label: "Audit Logs", icon: FileText },
+const adminNav: NavGroup[] = [
+  {
+    label: "Operations",
+    items: [
+      { href: "/admin", label: "Admin Dashboard", icon: BarChart3 },
+      { href: "/admin/complaints", label: "Manage Complaints", icon: AlertCircle },
+      { href: "/admin/certificates", label: "Certificates Queue", icon: FileBadge },
+    ],
+  },
+  {
+    label: "Records",
+    items: [
+      { href: "/admin/citizens", label: "Citizens", icon: Users },
+      { href: "/admin/reports", label: "Reports", icon: ClipboardList },
+      { href: "/admin/audit-logs", label: "Audit Logs", icon: FileText },
+    ],
+  },
 ]
+
+function isActivePath(location: string, href: string) {
+  if (href === "/admin") return location === "/admin"
+  return location === href || location.startsWith(href + "/")
+}
+
+function findNav(location: string) {
+  for (const group of [...citizenNav, ...adminNav]) {
+    const item = group.items.find((i) => isActivePath(location, i.href))
+    if (item) return { group, item }
+  }
+  return null
+}
 
 export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boolean) => void }) {
   const [location] = useLocation()
   const { data: profile } = useGetProfile()
   const { data: unreadCount } = useGetUnreadNotificationCount()
   const isAdmin = profile?.role === "admin" || profile?.role === "super_admin"
+  const groups = isAdmin ? adminNav : citizenNav
+
+  // Close the drawer after navigating on mobile
+  React.useEffect(() => { setOpen(false) }, [location, setOpen])
 
   return (
     <>
-      <div 
-        className={cn("fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden", isOpen ? "block" : "hidden")}
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-foreground/30 backdrop-blur-[2px] transition-opacity duration-300 lg:hidden",
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        )}
         onClick={() => setOpen(false)}
       />
       <aside className={cn(
-        "fixed top-0 left-0 z-50 h-full w-64 bg-card border-r flex flex-col transition-transform duration-300 ease-in-out lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        "fixed top-0 left-0 z-50 flex h-full w-[17rem] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0",
+        isOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "-translate-x-full"
       )}>
-        <div className="h-16 flex items-center px-6 border-b">
-          <Link href={isAdmin ? "/admin" : "/"} className="flex items-center gap-2 font-bold text-lg tracking-tight font-serif text-primary">
-            <Building2 className="w-6 h-6" />
-            <span>SmartCity</span>
+        <div className="flex h-[4.5rem] items-center justify-between px-6">
+          <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2.5 text-sidebar-accent-foreground">
+            <BrandMark className="h-8 w-8" />
+            <span className="flex flex-col leading-none">
+              <span className="text-[1.2rem] font-medium tracking-[-0.04em]">SmartCity</span>
+              <span className="mt-1 font-mono text-[0.68rem] uppercase text-sidebar-foreground">{isAdmin ? "Admin Console" : "Citizen Portal"}</span>
+            </span>
           </Link>
+          <button
+            className="rounded-full p-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-        
-        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
-          {isAdmin ? (
-            <div className="space-y-1">
-              <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 text-primary">Admin Panel</p>
-              {adminNavItems.map((item) => {
-                const isActive = location === item.href || (item.href !== "/admin" && location.startsWith(item.href))
-                return (
-                  <Link key={item.href} href={item.href} className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-primary text-primary-foreground" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}>
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                )
-              })}
+
+        <nav className="flex-1 space-y-7 overflow-y-auto px-4 pb-6 pt-4 [scrollbar-width:thin]">
+          {groups.map((group) => (
+            <div key={group.label}>
+              <p className="mb-2 px-4 font-mono text-[0.72rem] uppercase tracking-[0.04em] text-sidebar-foreground/70">{group.label}</p>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const active = isActivePath(location, item.href)
+                  const count = item.badge ? unreadCount?.count : 0
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={cn(
+                        "group relative flex items-center gap-3 rounded-full px-4 py-2.5 text-[0.9rem] tracking-[-0.01em] transition-colors duration-300",
+                        active
+                          ? "text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      {active && (
+                        <motion.span
+                          layoutId="sidebar-active"
+                          className="absolute inset-0 rounded-full bg-sidebar-primary"
+                          transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                        />
+                      )}
+                      <item.icon className="relative h-[1.05rem] w-[1.05rem] stroke-[1.75]" />
+                      <span className="relative">{item.label}</span>
+                      {count ? (
+                        <span
+                          className={cn(
+                            "relative ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[0.7rem]",
+                            active ? "bg-sidebar-primary-foreground text-sidebar-primary" : "bg-sidebar-primary text-sidebar-primary-foreground"
+                          )}
+                          data-no-translate="true"
+                        >
+                          {count}
+                        </span>
+                      ) : null}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
-          ) : (
-            <div className="space-y-1">
-              <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Citizen Services</p>
-              {citizenNavItems.map((item) => {
-                const isActive = location === item.href
-                return (
-                  <Link key={item.href} href={item.href} className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-primary/10 text-primary" 
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}>
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                    {item.badge && unreadCount?.count ? (
-                      <Badge variant="secondary" className="ml-auto bg-primary text-primary-foreground hover:bg-primary px-1.5 min-w-5 h-5 flex items-center justify-center text-[10px]">
-                        {unreadCount.count}
-                      </Badge>
-                    ) : null}
-                  </Link>
-                )
-              })}
-            </div>
-          )}
-        </div>
+          ))}
+        </nav>
+
+        {!isAdmin && (
+          <div className="p-4">
+            <Link
+              href="/ai-assistant"
+              className="group block rounded-[20px] border border-sidebar-border bg-card p-5 transition-colors duration-300 hover:border-sidebar-primary/30 hover:bg-sidebar-accent"
+            >
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-500" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                </span>
+                <span className="font-mono text-[0.72rem] uppercase text-sidebar-foreground">Karen is online</span>
+              </div>
+              <p className="mt-3 flex items-center justify-between text-base tracking-[-0.02em] text-sidebar-accent-foreground">
+                <span>Ask about <em className="italic">any service</em></span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground transition-transform duration-300 group-hover:-rotate-45">
+                  <ArrowRight className="h-4 w-4" />
+                </span>
+              </p>
+            </Link>
+          </div>
+        )}
       </aside>
     </>
   )
 }
 
 export function Topbar({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => void }) {
+  const [location] = useLocation()
   const { theme, setTheme } = useTheme()
   const { language, toggleLanguage } = useLanguage()
   const { signOut } = useClerk()
   const { user } = useUser()
   const { data: profile } = useGetProfile()
   const { data: unreadCount } = useGetUnreadNotificationCount()
+  const current = findNav(location)
 
   return (
-    <header className="h-16 border-b bg-card flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)}>
-          <Menu className="w-5 h-5" />
+    <header className="sticky top-0 z-30 flex h-[4.5rem] items-center justify-between border-b border-border/70 bg-background/80 px-4 backdrop-blur-xl lg:px-8">
+      <div className="flex min-w-0 items-center gap-3">
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
+          <Menu className="h-5 w-5" />
         </Button>
+        <div className="hidden min-w-0 sm:block">
+          <p className="eyebrow text-muted-foreground" data-no-translate="true">{format(new Date(), "EEE · d MMM yyyy")}</p>
+          {current && (
+            <p className="mt-0.5 truncate text-sm font-semibold">
+              <span className="text-muted-foreground">{current.group.label}</span>
+              <span className="mx-1.5 text-muted-foreground/50">/</span>
+              <span>{current.item.label}</span>
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={toggleLanguage}
-          className="gap-2 px-2 sm:px-3"
+          className="h-9 gap-2 rounded-full px-3 text-muted-foreground hover:text-foreground"
           aria-label={language === "en" ? "Switch to Tamil" : "Switch to English"}
           title={language === "en" ? "Switch to Tamil" : "Switch to English"}
           data-no-translate="true"
@@ -168,33 +266,43 @@ export function Topbar({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
         <Button
           variant="ghost"
           size="icon"
+          className="relative rounded-full text-muted-foreground hover:text-foreground"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
         >
-          <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+          <Sun className="h-[1.1rem] w-[1.1rem] rotate-0 scale-100 transition-all duration-500 dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute h-[1.1rem] w-[1.1rem] rotate-90 scale-0 transition-all duration-500 dark:rotate-0 dark:scale-100" />
           <span className="sr-only">Toggle theme</span>
         </Button>
 
-        <Link href="/notifications" className="relative p-2 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted">
-          <Bell className="w-5 h-5" />
+        <Link href="/notifications" className="relative rounded-full p-2.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Notifications">
+          <Bell className="h-[1.1rem] w-[1.1rem]" />
           {unreadCount?.count ? (
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive border border-card" />
+            <span className="absolute right-2 top-2 flex h-2 w-2">
+              <span className="pulse-ring absolute inline-flex h-full w-full rounded-full bg-secondary" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-secondary ring-2 ring-background" />
+            </span>
           ) : null}
         </Link>
 
-        <div className="flex items-center gap-3 pl-2 sm:pl-4 sm:border-l">
-          <Link href="/profile" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium leading-none">{profile?.firstName || user?.firstName} {profile?.lastName || user?.lastName}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{profile?.role === 'admin' || profile?.role === 'super_admin' ? 'Administrator' : 'Citizen'}</p>
+        <div className="ml-1 flex items-center gap-2 border-l pl-2 sm:ml-2 sm:pl-4">
+          <Link href="/profile" className="flex items-center gap-3 rounded-full transition-opacity hover:opacity-80">
+            <div className="hidden text-right md:block">
+              <p className="text-sm font-semibold leading-none">{profile?.firstName || user?.firstName} {profile?.lastName || user?.lastName}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{profile?.role === 'admin' || profile?.role === 'super_admin' ? 'Administrator' : 'Citizen'}</p>
             </div>
-            <Avatar className="h-9 w-9 border">
+            <Avatar className="h-9 w-9 ring-2 ring-background outline outline-1 outline-border">
               <AvatarImage src={profile?.avatarUrl || user?.imageUrl} alt="Avatar" />
-              <AvatarFallback><UserIcon className="w-4 h-4" /></AvatarFallback>
+              <AvatarFallback className="bg-accent text-accent-foreground"><UserIcon className="h-4 w-4" /></AvatarFallback>
             </Avatar>
           </Link>
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => signOut({ redirectUrl: basePath || "/" })}>
-            <LogOut className="w-4 h-4" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => signOut({ redirectUrl: basePath || "/" })}
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </div>
@@ -204,16 +312,23 @@ export function Topbar({ setSidebarOpen }: { setSidebarOpen: (v: boolean) => voi
 
 export function MainLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [location] = useLocation()
 
   return (
-    <div className="min-h-[100dvh] bg-background flex">
+    <div className="flex min-h-[100dvh] bg-background">
       <Sidebar isOpen={sidebarOpen} setOpen={setSidebarOpen} />
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
+      <div className="flex min-w-0 flex-1 flex-col lg:pl-[17rem]">
         <Topbar setSidebarOpen={setSidebarOpen} />
-        <main className="flex-1 p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+        <main className="flex-1 px-4 py-6 lg:px-10 lg:py-10">
+          <motion.div
+            key={location}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: easeOutExpo }}
+            className="mx-auto max-w-7xl space-y-6"
+          >
             {children}
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>
@@ -221,13 +336,19 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
 }
 
 export function PageHeader({ title, description, children }: { title: string, description?: string, children?: React.ReactNode }) {
+  const [location] = useLocation()
+  const section = findNav(location)?.group.label
+
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="mb-8 flex flex-col justify-between gap-5 border-b pb-8 sm:flex-row sm:items-end">
       <div>
-        <h1 className="text-3xl font-bold font-serif tracking-tight">{title}</h1>
-        {description && <p className="text-muted-foreground mt-1">{description}</p>}
+        {section && (
+          <p className="eyebrow mb-3 text-muted-foreground">{section}</p>
+        )}
+        <h1 className="text-[2.25rem] font-normal leading-[1.05] tracking-[-0.045em] md:text-[3rem]">{title}</h1>
+        {description && <p className="mt-3 max-w-2xl text-lg tracking-[-0.01em] text-muted-foreground">{description}</p>}
       </div>
-      {children && <div className="flex items-center gap-3">{children}</div>}
+      {children && <div className="flex flex-wrap items-center gap-3">{children}</div>}
     </div>
   )
 }

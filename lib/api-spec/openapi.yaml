@@ -1057,6 +1057,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/Payment"
 
+  /payments/gateway/orders:
+    post:
+      operationId: createGatewayOrder
+      tags: [payments]
+      summary: Create a sandbox payment order for a bill
+      description: >-
+        Dummy gateway (test mode). The amount is always computed on the server from the bill.
+        Returns a signed order token that must be passed to confirmGatewayPayment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GatewayOrderInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayOrder"
+
+  /payments/gateway/confirm:
+    post:
+      operationId: confirmGatewayPayment
+      tags: [payments]
+      summary: Pay a sandbox order
+      description: >-
+        Simulates authorising the payment. Test card 4000 0000 0000 0002 is declined,
+        4000 0000 0000 9995 fails with insufficient funds, UPI ID failure@upi is declined,
+        and the card OTP is always 123456. Failed attempts are recorded in payment history.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GatewayPaymentInput"
+      responses:
+        "200":
+          description: Payment succeeded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayPaymentResult"
+        "402":
+          description: Payment declined
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GatewayError"
+
   # ─────────────────────────────── NOTIFICATIONS ───────────────────────────────
   /notifications:
     get:
@@ -2410,6 +2461,107 @@ components:
         pagination:
           $ref: "#/components/schemas/PaginationMeta"
       required: [data, pagination]
+
+    GatewayOrderInput:
+      type: object
+      properties:
+        purpose:
+          type: string
+          enum: [property_tax, water_tax]
+        referenceId:
+          type: string
+      required: [purpose, referenceId]
+
+    GatewayOrder:
+      type: object
+      properties:
+        orderId:
+          type: string
+        token:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        description:
+          type: string
+        merchant:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        testMode:
+          type: boolean
+      required: [orderId, token, amount, currency, description, merchant, expiresAt, testMode]
+
+    GatewayPaymentInput:
+      type: object
+      properties:
+        token:
+          type: string
+        method:
+          type: string
+          enum: [card, upi, net_banking]
+        card:
+          type: object
+          properties:
+            number:
+              type: string
+            expiry:
+              type: string
+              description: MM/YY
+            cvv:
+              type: string
+            name:
+              type: string
+          required: [number, expiry, cvv, name]
+        otp:
+          type: string
+        upiId:
+          type: string
+        bank:
+          type: string
+        bankOutcome:
+          type: string
+          enum: [success, failure]
+          description: Outcome chosen on the simulated bank page
+      required: [token, method]
+
+    GatewayPaymentResult:
+      type: object
+      properties:
+        paymentId:
+          type: string
+        orderId:
+          type: string
+        receiptNumber:
+          type: string
+        amount:
+          type: number
+        paymentMethod:
+          type: string
+        methodDetail:
+          type: string
+        status:
+          type: string
+        paidAt:
+          type: string
+          format: date-time
+      required: [paymentId, orderId, receiptNumber, amount, paymentMethod, methodDetail, status, paidAt]
+
+    GatewayError:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+          enum: [card_declined, insufficient_funds, invalid_card, expired_card, invalid_otp, invalid_upi, upi_declined, bank_declined, invalid_bank, order_expired, invalid_order, already_paid, not_found]
+        retryable:
+          type: boolean
+        paymentId:
+          type: string
+      required: [error, code, retryable]
 
     # ─── Notifications ───
     Notification:
