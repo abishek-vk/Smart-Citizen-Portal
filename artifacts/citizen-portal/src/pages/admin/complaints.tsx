@@ -8,7 +8,7 @@ import { format } from "date-fns"
 import { useQueryClient } from "@tanstack/react-query"
 import { getListComplaintsQueryKey } from "@workspace/api-client-react"
 import { useToast } from "@/hooks/use-toast"
-import { Sparkles, MapPin, Search } from "lucide-react"
+import { ScanSearch, MapPin, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -122,7 +122,7 @@ export default function AdminComplaints() {
 
                   {complaint.aiCategory && (
                     <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10 flex gap-3">
-                      <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <ScanSearch className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                       <div className="text-sm">
                         <span className="font-medium text-primary">Automated triage: </span>
                         Suggested category: <span className="font-medium">{complaint.aiCategory.replace(/_/g, " ")}</span>.
@@ -157,7 +157,7 @@ export default function AdminComplaints() {
                       onClick={() => handleAnalyze(complaint.id)}
                       disabled={analyzeMutation.isPending || updateMutation.isPending}
                     >
-                      <Sparkles className="w-4 h-4" /> Run Triage Analysis
+                      <ScanSearch className="w-4 h-4" /> Run Triage Analysis
                     </Button>
                   )}
                 </div>

@@ -1468,6 +1468,58 @@ export const GetPaymentResponse = zod.object({
 
 
 /**
+ * Dummy gateway (test mode). The amount is always computed on the server from the bill. Returns a signed order token that must be passed to confirmGatewayPayment.
+ * @summary Create a sandbox payment order for a bill
+ */
+export const CreateGatewayOrderBody = zod.object({
+  "purpose": zod.enum(['property_tax', 'water_tax']),
+  "referenceId": zod.string()
+})
+
+export const CreateGatewayOrderResponse = zod.object({
+  "orderId": zod.string(),
+  "token": zod.string(),
+  "amount": zod.number(),
+  "currency": zod.string(),
+  "description": zod.string(),
+  "merchant": zod.string(),
+  "expiresAt": zod.coerce.date(),
+  "testMode": zod.boolean()
+})
+
+
+/**
+ * Simulates authorising the payment. Test card 4000 0000 0000 0002 is declined, 4000 0000 0000 9995 fails with insufficient funds, UPI ID failure@upi is declined, and the card OTP is always 123456. Failed attempts are recorded in payment history.
+ * @summary Pay a sandbox order
+ */
+export const ConfirmGatewayPaymentBody = zod.object({
+  "token": zod.string(),
+  "method": zod.enum(['card', 'upi', 'net_banking']),
+  "card": zod.object({
+  "number": zod.string(),
+  "expiry": zod.string().describe('MM\/YY'),
+  "cvv": zod.string(),
+  "name": zod.string()
+}).optional(),
+  "otp": zod.string().optional(),
+  "upiId": zod.string().optional(),
+  "bank": zod.string().optional(),
+  "bankOutcome": zod.enum(['success', 'failure']).optional().describe('Outcome chosen on the simulated bank page')
+})
+
+export const ConfirmGatewayPaymentResponse = zod.object({
+  "paymentId": zod.string(),
+  "orderId": zod.string(),
+  "receiptNumber": zod.string(),
+  "amount": zod.number(),
+  "paymentMethod": zod.string(),
+  "methodDetail": zod.string(),
+  "status": zod.string(),
+  "paidAt": zod.coerce.date()
+})
+
+
+/**
  * @summary List user notifications
  */
 export const listNotificationsQueryPageDefault = 1;

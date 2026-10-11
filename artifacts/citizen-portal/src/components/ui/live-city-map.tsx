@@ -108,11 +108,11 @@ export function LiveCityMap({
             <div style="
               width: 38px;
               height: 38px;
-              background-color: #4f46e5;
+              background-color: #1F1B6B;
               border: 3px solid white;
               border-radius: 50% 50% 50% 0;
               transform: rotate(-45deg);
-              box-shadow: 0 4px 12px rgba(79,70,229,0.4);
+              box-shadow: 0 4px 12px rgba(20,92,73,0.4);
               display: flex;
               align-items: center;
               justify-content: center;
@@ -156,7 +156,7 @@ export function LiveCityMap({
             item.availableSpots !== undefined && item.availableSpots > 0
               ? `<button id="book-btn-${item.id}" style="
                   width: 100%;
-                  background: #4f46e5;
+                  background: #1F1B6B;
                   color: white;
                   border: none;
                   padding: 6px 12px;
