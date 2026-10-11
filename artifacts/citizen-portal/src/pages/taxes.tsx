@@ -671,11 +671,11 @@ export default function Taxes() {
       {loadingSummary ? (
         <Skeleton className="h-36 w-full rounded-2xl" />
       ) : summary ? (
-        <Card className="grain bg-sidebar text-white border-transparent overflow-hidden relative shadow-lg">
-          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[36px] border-sidebar-primary/10" />
+        <Card className="grain bg-ink text-white border-transparent overflow-hidden relative shadow-lg">
+          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[36px] border-ink-accent/10" />
           <CardContent className="p-8 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-              <div className="flex items-center gap-2 eyebrow text-sidebar-primary mb-2">
+              <div className="flex items-center gap-2 eyebrow text-ink-accent mb-2">
                 <Receipt className="w-4 h-4" /> Municipal Dues Overview
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold font-serif tracking-tight text-white">

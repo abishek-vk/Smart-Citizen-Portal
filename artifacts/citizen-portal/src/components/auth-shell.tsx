@@ -18,9 +18,9 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
     <div className="grid min-h-[100dvh] bg-background lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
       {/* Brand panel */}
       <aside className="hidden p-4 lg:block">
-        <div className="relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-sidebar p-12 text-white">
+        <div className="relative flex h-full flex-col overflow-hidden rounded-[2rem] bg-ink p-12 text-white">
           <div aria-hidden className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-secondary/30 blur-3xl" />
-          <div aria-hidden className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-sidebar-primary/20 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-ink-accent/20 blur-3xl" />
 
           <Link href="/" className="relative"><Wordmark tone="light" /></Link>
 

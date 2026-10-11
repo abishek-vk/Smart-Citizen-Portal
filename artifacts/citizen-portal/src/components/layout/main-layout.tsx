@@ -20,7 +20,7 @@ import {
   Moon,
   Sun,
   LogOut,
-  ArrowUpRight,
+  ArrowRight,
   X,
   User as UserIcon,
   Languages
@@ -127,31 +127,19 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
         onClick={() => setOpen(false)}
       />
       <aside className={cn(
-        "fixed top-0 left-0 z-50 flex h-full w-[17rem] flex-col bg-sidebar text-sidebar-foreground transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0",
-        isOpen ? "translate-x-0" : "-translate-x-full"
+        "fixed top-0 left-0 z-50 flex h-full w-[17rem] flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:translate-x-0",
+        isOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "-translate-x-full"
       )}>
-        {/* Decorative street grid, very faint */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(hsl(240 60% 96%) 1px, transparent 1px), linear-gradient(90deg, hsl(240 60% 96%) 1px, transparent 1px)",
-            backgroundSize: "44px 44px",
-            maskImage: "linear-gradient(to bottom, black, transparent 40%)",
-          }}
-        />
-
-        <div className="relative flex h-[4.5rem] items-center justify-between px-5">
-          <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2.5">
-            <BrandMark tone="light" className="h-8 w-8" />
+        <div className="flex h-[4.5rem] items-center justify-between px-6">
+          <Link href={isAdmin ? "/admin" : "/dashboard"} className="flex items-center gap-2.5 text-sidebar-accent-foreground">
+            <BrandMark className="h-8 w-8" />
             <span className="flex flex-col leading-none">
-              <span className="text-[1.15rem] font-medium tracking-[-0.04em] text-sidebar-accent-foreground">SmartCity</span>
-              <span className="eyebrow mt-1 text-[0.56rem] text-sidebar-foreground/55">{isAdmin ? "Admin Console" : "Citizen Portal"}</span>
+              <span className="text-[1.2rem] font-medium tracking-[-0.04em]">SmartCity</span>
+              <span className="mt-1 font-mono text-[0.68rem] uppercase text-sidebar-foreground">{isAdmin ? "Admin Console" : "Citizen Portal"}</span>
             </span>
           </Link>
           <button
-            className="rounded-lg p-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
+            className="rounded-full p-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground lg:hidden"
             onClick={() => setOpen(false)}
             aria-label="Close menu"
           >
@@ -159,11 +147,11 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
           </button>
         </div>
 
-        <nav className="relative flex-1 space-y-6 overflow-y-auto px-3 pb-6 pt-3 [scrollbar-width:thin]">
+        <nav className="flex-1 space-y-7 overflow-y-auto px-4 pb-6 pt-4 [scrollbar-width:thin]">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="eyebrow mb-2 px-3 text-[0.6rem] text-sidebar-foreground/45">{group.label}</p>
-              <div className="space-y-0.5">
+              <p className="mb-2 px-4 font-mono text-[0.72rem] uppercase tracking-[0.04em] text-sidebar-foreground/70">{group.label}</p>
+              <div className="space-y-1">
                 {group.items.map((item) => {
                   const active = isActivePath(location, item.href)
                   const count = item.badge ? unreadCount?.count : 0
@@ -172,24 +160,29 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "group relative flex items-center gap-3 rounded-full px-3.5 py-2 text-[0.88rem] font-normal transition-colors",
-                        active ? "text-sidebar-accent-foreground" : "text-sidebar-foreground/70 hover:text-sidebar-accent-foreground"
+                        "group relative flex items-center gap-3 rounded-full px-4 py-2.5 text-[0.9rem] tracking-[-0.01em] transition-colors duration-300",
+                        active
+                          ? "text-sidebar-primary-foreground"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                     >
                       {active && (
                         <motion.span
                           layoutId="sidebar-active"
-                          className="absolute inset-0 rounded-full bg-sidebar-accent"
+                          className="absolute inset-0 rounded-full bg-sidebar-primary"
                           transition={{ type: "spring", stiffness: 420, damping: 36 }}
                         />
                       )}
-                      <item.icon className={cn(
-                        "relative h-[1.05rem] w-[1.05rem] transition-transform duration-300 group-hover:scale-110",
-                        active && "text-sidebar-primary"
-                      )} />
+                      <item.icon className="relative h-[1.05rem] w-[1.05rem] stroke-[1.75]" />
                       <span className="relative">{item.label}</span>
                       {count ? (
-                        <span className="relative ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-sidebar-primary px-1.5 font-mono text-[0.65rem] font-semibold text-sidebar-primary-foreground" data-no-translate="true">
+                        <span
+                          className={cn(
+                            "relative ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[0.7rem]",
+                            active ? "bg-sidebar-primary-foreground text-sidebar-primary" : "bg-sidebar-primary text-sidebar-primary-foreground"
+                          )}
+                          data-no-translate="true"
+                        >
                           {count}
                         </span>
                       ) : null}
@@ -202,21 +195,23 @@ export function Sidebar({ isOpen, setOpen }: { isOpen: boolean, setOpen: (v: boo
         </nav>
 
         {!isAdmin && (
-          <div className="relative p-3">
+          <div className="p-4">
             <Link
               href="/ai-assistant"
-              className="group block overflow-hidden rounded-[20px] border border-sidebar-border bg-sidebar-accent/60 p-4 transition-colors hover:bg-sidebar-accent"
+              className="group block rounded-[20px] border border-sidebar-border bg-card p-5 transition-colors duration-300 hover:border-sidebar-primary/30 hover:bg-sidebar-accent"
             >
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-400" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="pulse-ring absolute inline-flex h-full w-full rounded-full bg-emerald-500" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
-                <span className="eyebrow text-[0.58rem] text-sidebar-foreground/60">Karen is online</span>
+                <span className="font-mono text-[0.72rem] uppercase text-sidebar-foreground">Karen is online</span>
               </div>
-              <p className="mt-2 flex items-center justify-between text-[0.95rem] font-medium text-sidebar-accent-foreground">
-                Ask about any service
-                <ArrowUpRight className="h-4 w-4 text-sidebar-primary transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              <p className="mt-3 flex items-center justify-between text-base tracking-[-0.02em] text-sidebar-accent-foreground">
+                <span>Ask about <em className="italic">any service</em></span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground transition-transform duration-300 group-hover:-rotate-45">
+                  <ArrowRight className="h-4 w-4" />
+                </span>
               </p>
             </Link>
           </div>

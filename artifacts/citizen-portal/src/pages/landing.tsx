@@ -81,7 +81,7 @@ function PillLink({
         "group inline-flex h-14 items-center justify-center gap-2 rounded-full px-7 text-sm font-medium uppercase tracking-[-0.01em] transition-colors duration-300",
         variant === "solid" && "bg-primary text-primary-foreground hover:bg-primary/88",
         variant === "outline" && "border border-primary bg-background text-foreground hover:bg-accent dark:border-border",
-        variant === "light" && "bg-white text-sidebar hover:bg-white/90",
+        variant === "light" && "bg-white text-ink hover:bg-white/90",
         className
       )}
     >
@@ -201,9 +201,9 @@ function PortalPreview() {
     { icon: FileText, label: "Property tax · Q3", status: "Paid", tone: "bg-accent text-accent-foreground" },
   ]
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-sidebar px-4 pt-10 sm:px-10 sm:pt-16 lg:px-20 lg:pt-20">
+    <div className="relative overflow-hidden rounded-3xl bg-ink px-4 pt-10 sm:px-10 sm:pt-16 lg:px-20 lg:pt-20">
       <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-secondary/30 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-sidebar-primary/20 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-ink-accent/20 blur-3xl" />
 
       <motion.div
         initial={{ opacity: 0, y: 40 }}
@@ -458,7 +458,7 @@ export default function LandingPage() {
 
         {/* ── Stats band ── */}
         <section className="px-4 sm:px-6">
-          <div className="mx-auto max-w-[1440px] rounded-[2rem] bg-sidebar py-16 text-white lg:py-24">
+          <div className="mx-auto max-w-[1440px] rounded-[2rem] bg-ink py-16 text-white lg:py-24">
             <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:flex-row lg:items-center lg:gap-16">
               <Reveal className="lg:w-6/12">
                 <h2 className="display-lg">
@@ -524,7 +524,7 @@ export default function LandingPage() {
 
         {/* ── How it works ── */}
         <section id="how-it-works" className="scroll-mt-24 px-4 sm:px-6">
-          <div className="mx-auto max-w-[1440px] rounded-[2rem] bg-sidebar py-16 text-white lg:py-24">
+          <div className="mx-auto max-w-[1440px] rounded-[2rem] bg-ink py-16 text-white lg:py-24">
             <div className="mx-auto max-w-7xl px-6">
               <Reveal>
                 <h2 className="display-lg mb-10 lg:mb-16">

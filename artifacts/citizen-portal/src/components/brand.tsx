@@ -6,7 +6,7 @@ type Tone = "indigo" | "light"
 const tones: Record<Tone, { tile: string; line: string; dot: string }> = {
   // Default: deep indigo tile with white roads and a lavender "you are here" dot
   indigo: { tile: "#1F1B6B", line: "#FFFFFF", dot: "#A9A4FF" },
-  // For indigo surfaces (sidebar, dark sections)
+  // For indigo surfaces (ink bands, footer)
   light: { tile: "#FFFFFF", line: "#1F1B6B", dot: "#6D5FF0" },
 }
 
