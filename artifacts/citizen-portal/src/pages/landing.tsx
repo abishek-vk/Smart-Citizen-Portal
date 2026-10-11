@@ -1,13 +1,13 @@
 import * as React from "react"
 import {
   ArrowUpRight, ArrowLeft, ArrowRight, ChevronDown, AlertCircle, FileText, FileBadge, Trash2, Car, Bus,
-  TreePine, Library, MessageSquare, LayoutDashboard, Bell, CheckCircle2, Clock3
+  TreePine, Library, MessageSquare, LayoutDashboard, Bell, CheckCircle2, Clock3, IndianRupee
 } from "lucide-react"
 import { Link } from "wouter"
-import { AnimatePresence, motion, useScroll, useMotionValueEvent } from "framer-motion"
+import { AnimatePresence, MotionConfig, motion, useScroll, useMotionValueEvent, useReducedMotion, useTransform, type MotionValue } from "framer-motion"
 import { LanguageSwitcher } from "@/components/language-provider"
 import { Wordmark, BrandMark, RollText } from "@/components/brand"
-import { Reveal, Stagger, StaggerItem, CountUp, easeOutExpo } from "@/components/motion"
+import { Reveal, Stagger, StaggerItem, CountUp, easeOutExpo, HeadingReveal, Magnetic, Spotlight, ScrollProgress, ScaleInSection } from "@/components/motion"
 import { cn } from "@/lib/utils"
 
 /* ─── Data ──────────────────────────────────────────────────────────────── */
@@ -74,7 +74,7 @@ function PillLink({
   arrow?: boolean
   className?: string
 }) {
-  return (
+  const link = (
     <Link
       href={href}
       className={cn(
@@ -89,6 +89,7 @@ function PillLink({
       {arrow && <ArrowUpRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />}
     </Link>
   )
+  return variant === "outline" ? link : <Magnetic>{link}</Magnetic>
 }
 
 function SiteHeader() {
@@ -167,6 +168,7 @@ function SiteHeader() {
           </motion.div>
         )}
       </AnimatePresence>
+      <ScrollProgress className="absolute inset-x-0 bottom-0" />
     </header>
   )
 }
@@ -200,16 +202,41 @@ function PortalPreview() {
     { icon: FileBadge, label: "Birth certificate #BC-2041", status: "Approved", tone: "bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300" },
     { icon: FileText, label: "Property tax · Q3", status: "Paid", tone: "bg-accent text-accent-foreground" },
   ]
+  const ref = React.useRef<HTMLDivElement>(null)
+  const reduce = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "center center"] })
+  const rotateX = useTransform(scrollYProgress, [0, 1], [24, 0])
+  const scale = useTransform(scrollYProgress, [0, 1], [0.86, 1])
+  const y = useTransform(scrollYProgress, [0, 1], [90, 0])
+  const glowA = useTransform(scrollYProgress, [0, 1], [-80, 40])
+  const glowB = useTransform(scrollYProgress, [0, 1], [60, -40])
+
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-ink px-4 pt-10 sm:px-10 sm:pt-16 lg:px-20 lg:pt-20">
-      <div aria-hidden className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-secondary/30 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-ink-accent/20 blur-3xl" />
+    <div ref={ref} className="relative overflow-hidden rounded-3xl bg-ink px-4 pt-10 [perspective:1400px] sm:px-10 sm:pt-16 lg:px-20 lg:pt-20">
+      <motion.div aria-hidden style={reduce ? undefined : { y: glowA }} className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-secondary/30 blur-3xl" />
+      <motion.div aria-hidden style={reduce ? undefined : { y: glowB }} className="pointer-events-none absolute -bottom-32 right-0 h-80 w-80 rounded-full bg-ink-accent/20 blur-3xl" />
+
+      <FloatingChip className="bottom-6 left-6 lg:bottom-10 lg:left-10" delay={0.5}>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-400">
+          <IndianRupee className="h-4 w-4" />
+        </span>
+        <span>
+          <span className="block text-xs font-medium">Payment received</span>
+          <span className="block font-mono text-[0.68rem] text-muted-foreground" data-no-translate="true">₹4,250.50 · Property tax</span>
+        </span>
+      </FloatingChip>
+      <FloatingChip className="right-6 top-12 lg:right-10 lg:top-16" delay={0.8}>
+        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-primary">
+          <CheckCircle2 className="h-4 w-4" />
+        </span>
+        <span>
+          <span className="block text-xs font-medium">Complaint resolved</span>
+          <span className="block font-mono text-[0.68rem] text-muted-foreground">Pothole · Ward 14</span>
+        </span>
+      </FloatingChip>
 
       <motion.div
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-80px" }}
-        transition={{ duration: 0.9, ease: easeOutExpo }}
+        style={reduce ? undefined : { rotateX, scale, y, transformOrigin: "50% 100%" }}
         className="relative mx-auto grid max-w-5xl overflow-hidden rounded-t-[20px] border border-b-0 border-white/10 bg-background text-foreground shadow-2xl sm:grid-cols-[13rem_1fr]"
       >
         <aside className="hidden flex-col gap-1 border-r bg-card p-4 sm:flex">
@@ -251,17 +278,89 @@ function PortalPreview() {
           </div>
 
           <div className="mt-5 divide-y rounded-2xl border">
-            {rows.map(({ icon: Icon, label, status, tone }) => (
-              <div key={label} className="flex items-center gap-3 px-4 py-3 text-sm">
+            {rows.map(({ icon: Icon, label, status, tone }, i) => (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, x: -16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.6, ease: easeOutExpo, delay: 0.3 + i * 0.12 }}
+                className="flex items-center gap-3 px-4 py-3 text-sm"
+              >
                 <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="min-w-0 flex-1 truncate">{label}</span>
-                <span className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs", tone)}>{status}</span>
-              </div>
+                <motion.span
+                  initial={{ scale: 0.6, opacity: 0 }}
+                  whileInView={{ scale: 1, opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ type: "spring", stiffness: 380, damping: 18, delay: 0.55 + i * 0.12 }}
+                  className={cn("shrink-0 rounded-full px-2.5 py-0.5 text-xs", tone)}
+                >
+                  {status}
+                </motion.span>
+              </motion.div>
             ))}
           </div>
         </div>
       </motion.div>
     </div>
+  )
+}
+
+/** Small notification card that pops in and then bobs gently over the cover. */
+function FloatingChip({ className, delay, children }: { className?: string; delay: number; children: React.ReactNode }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.9 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ type: "spring", stiffness: 200, damping: 18, delay }}
+      className={cn("absolute z-10 hidden md:block", className)}
+    >
+      <div className="animate-float-slow flex items-center gap-3 rounded-2xl border bg-background/95 py-2.5 pl-2.5 pr-4 text-foreground shadow-xl backdrop-blur" style={{ animationDelay: `${delay * 2}s` }}>
+        {children}
+      </div>
+    </motion.div>
+  )
+}
+
+/** Step cards with a progress line that fills as the section scrolls past. */
+function StepsTimeline() {
+  const ref = React.useRef<HTMLDivElement>(null)
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 55%"] })
+  return (
+    <div ref={ref} className="mb-12 grid grid-cols-1 gap-5 md:grid-cols-3 lg:mb-16 lg:gap-8">
+      {steps.map((s, i) => (
+        <StepCard key={s.title} step={s} index={i} progress={scrollYProgress} />
+      ))}
+    </div>
+  )
+}
+
+function StepCard({ step, index, progress }: { step: (typeof steps)[number]; index: number; progress: MotionValue<number> }) {
+  const range = [index / steps.length, (index + 1) / steps.length]
+  const fill = useTransform(progress, range, [0, 1])
+  const glow = useTransform(progress, range, [0.04, 0.1])
+  const bg = useTransform(glow, (g) => `rgba(255,255,255,${g})`)
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.8, ease: easeOutExpo, delay: index * 0.12 }}
+      style={{ backgroundColor: bg }}
+      className="relative overflow-hidden rounded-[20px] border border-white/10 p-6 sm:p-8"
+    >
+      <div className="absolute inset-x-0 top-0 h-[3px] bg-white/10">
+        <motion.div className="h-full origin-left bg-ink-accent" style={{ scaleX: fill }} />
+      </div>
+      <div className="flex justify-between font-mono text-base text-white/70">
+        <span>STEP</span>
+        <span data-no-translate="true">0{index + 1}</span>
+      </div>
+      <h3 className="mb-3 mt-16 text-2xl font-normal tracking-[-0.03em]">{step.title}</h3>
+      <p className="text-lg text-white/65">{step.desc}</p>
+    </motion.div>
   )
 }
 
@@ -295,9 +394,7 @@ function Testimonials() {
       <div className="mx-auto max-w-[1440px] px-6 sm:pl-10 xl:pl-20">
         <div className="flex flex-col gap-10 lg:flex-row lg:items-center">
           <div className="w-full lg:w-4/12">
-            <h2 className="display-lg mb-10 lg:mb-16">
-              Citizen <em className="italic">Reviews</em>
-            </h2>
+            <HeadingReveal className="display-lg mb-10 lg:mb-16" parts={["Citizen", { italic: "Reviews" }]} />
             <div className="flex gap-3">
               <button onClick={() => scrollBy(-1)} disabled={edge.start} aria-label="Previous review" className={cn(navBtn, edge.start ? "cursor-not-allowed opacity-25" : "opacity-50 hover:opacity-100")}>
                 <ArrowLeft className="h-5 w-5" />
@@ -314,7 +411,7 @@ function Testimonials() {
             className="flex w-full snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [scrollbar-width:none] lg:w-8/12 lg:[mask-image:linear-gradient(to_right,black_0,black_calc(100%-160px),transparent_100%)] [&::-webkit-scrollbar]:hidden"
           >
             {testimonials.map(({ quote, name, role }) => (
-              <figure key={name} data-card className="w-[85%] shrink-0 snap-start rounded-[20px] border bg-card p-8 sm:w-[26rem] sm:p-10">
+              <figure key={name} data-card className="w-[85%] shrink-0 snap-start rounded-[20px] border bg-card p-8 transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1.5 hover:shadow-lg sm:w-[26rem] sm:p-10">
                 <svg width="32" height="24" viewBox="0 0 32 24" className="mb-6 text-primary/25" aria-hidden>
                   <path fill="currentColor" d="M0 24V14.4C0 6.4 4.3 1.6 12 0l1.4 3.2C9 4.6 7 7.4 6.8 11.2H12V24H0Zm19 0V14.4C19 6.4 23.3 1.6 31 0l1 3.2c-4.4 1.4-6.4 4.2-6.6 8H31V24H19Z" />
                 </svg>
@@ -338,9 +435,7 @@ function Faq() {
     <section id="faq" className="scroll-mt-24 py-12 lg:py-24">
       <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:flex-row lg:gap-16">
         <Reveal className="lg:w-5/12">
-          <h2 className="display-lg">
-            Frequently Asked <em className="italic">Questions</em>
-          </h2>
+          <HeadingReveal className="display-lg" parts={["Frequently Asked", { italic: "Questions" }]} />
         </Reveal>
         <div className="lg:w-7/12">
           {faqs.map((f, i) => {
@@ -381,6 +476,7 @@ function Faq() {
 
 export default function LandingPage() {
   return (
+    <MotionConfig reducedMotion="user">
     <div className="flex min-h-screen flex-col overflow-x-clip bg-background font-sans text-foreground antialiased">
       <SiteHeader />
 
@@ -396,11 +492,13 @@ export default function LandingPage() {
                   Municipal services · Open 24/7
                 </p>
               </StaggerItem>
-              <StaggerItem>
-                <h1 className="display-xl mb-5">
-                  Every City Service, <em className="italic">One Portal</em> Away.
-                </h1>
-              </StaggerItem>
+              <HeadingReveal
+                as="h1"
+                inView={false}
+                delay={0.15}
+                className="display-xl mb-5"
+                parts={["Every City Service,", { italic: "One Portal" }, "Away."]}
+              />
               <StaggerItem>
                 <p className="mx-auto mb-10 max-w-xl text-lg leading-7 tracking-[-0.01em] text-muted-foreground lg:mb-12">
                   Pay taxes, report civic issues, apply for certificates and book parking — then track it all from one
@@ -419,7 +517,7 @@ export default function LandingPage() {
         <section>
           <div className="mx-auto max-w-[1440px]">
             <div className="flex overflow-hidden py-10 [mask-image:linear-gradient(to_right,transparent_0,black_128px,black_calc(100%-200px),transparent_100%)]">
-              <ul className="flex shrink-0 animate-marquee items-center [--marquee-duration:40s]">
+              <ul className="flex shrink-0 animate-marquee items-center [--marquee-duration:40s] hover:[animation-play-state:paused]">
                 {[...services, ...services].map(({ icon: Icon, title }, i) => (
                   <li key={i} className="mx-8 flex items-center gap-3 whitespace-nowrap font-mono text-lg uppercase text-muted-foreground/80" aria-hidden={i >= services.length}>
                     <Icon className="h-5 w-5" />
@@ -438,16 +536,21 @@ export default function LandingPage() {
         <section className="py-12 lg:py-24">
           <div className="mx-auto max-w-7xl px-6">
             <Reveal>
-              <h2 className="display-lg mb-10 lg:mb-16 lg:w-5/12">
-                Why Citizens <em className="italic">Choose Us</em>
-              </h2>
+              <HeadingReveal className="display-lg mb-10 lg:mb-16 lg:w-5/12" parts={["Why Citizens", { italic: "Choose Us" }]} />
             </Reveal>
             <Stagger className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
               {reasons.map((r, i) => (
                 <StaggerItem key={r.title} className="group">
-                  <div className="transition-transform duration-500 group-hover:-rotate-6">
+                  <motion.div
+                    variants={{
+                      hidden: { rotate: -90, scale: 0.4, opacity: 0 },
+                      show: { rotate: 0, scale: 1, opacity: 1, transition: { type: "spring", stiffness: 150, damping: 13, delay: i * 0.08 } },
+                    }}
+                    whileHover={{ rotate: -12, scale: 1.08 }}
+                    className="w-fit"
+                  >
                     <ReasonGlyph index={i} />
-                  </div>
+                  </motion.div>
                   <h3 className="mb-4 mt-8 text-2xl font-normal tracking-[-0.03em]">{r.title}</h3>
                   <p className="text-lg text-muted-foreground">{r.desc}</p>
                 </StaggerItem>
@@ -458,12 +561,10 @@ export default function LandingPage() {
 
         {/* ── Stats band ── */}
         <section className="px-4 sm:px-6">
-          <div className="mx-auto max-w-[1440px] rounded-[2rem] bg-ink py-16 text-white lg:py-24">
+          <ScaleInSection className="mx-auto max-w-[1440px] overflow-hidden rounded-[2rem] bg-ink py-16 text-white lg:py-24">
             <div className="mx-auto flex max-w-7xl flex-col gap-10 px-6 lg:flex-row lg:items-center lg:gap-16">
               <Reveal className="lg:w-6/12">
-                <h2 className="display-lg">
-                  A Platform Built for <em className="italic">Every Citizen</em>
-                </h2>
+                <HeadingReveal className="display-lg" parts={["A Platform Built for", { italic: "Every Citizen" }]} />
               </Reveal>
               <Reveal delay={0.1} className="lg:w-6/12">
                 <p className="mb-5 text-xl">Civic services shouldn't mean queues, paperwork and repeat visits.</p>
@@ -488,24 +589,23 @@ export default function LandingPage() {
                 </div>
               </Reveal>
             </div>
-          </div>
+          </ScaleInSection>
         </section>
 
         {/* ── Services ── */}
         <section id="services" className="scroll-mt-24 py-12 lg:py-24">
           <div className="mx-auto max-w-7xl px-6">
             <Reveal className="mb-10 flex flex-col justify-between gap-6 lg:mb-16 lg:flex-row lg:items-end">
-              <h2 className="display-lg">
-                Our <em className="italic">Services</em>
-              </h2>
+              <HeadingReveal className="display-lg" parts={["Our", { italic: "Services" }]} />
               <p className="max-w-md text-lg text-muted-foreground">
                 Nine everyday city services, all available online and all tracked from the same dashboard.
               </p>
             </Reveal>
             <Stagger className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8">
               {services.map(({ icon: Icon, title, desc, href }, i) => (
-                <StaggerItem key={title}>
-                  <Link href={href} className="group flex h-full flex-col rounded-[20px] border bg-card p-8 transition-colors duration-300 hover:border-primary/30 hover:bg-accent/60">
+                <StaggerItem key={title} whileHover={{ y: -6 }} transition={{ type: "spring", stiffness: 300, damping: 22 }} className="h-full">
+                  <Spotlight className="h-full rounded-[20px]">
+                  <Link href={href} className="group flex h-full flex-col rounded-[20px] border bg-card p-8 transition-[border-color,box-shadow] duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5">
                     <div className="flex items-center justify-between">
                       <span className="text-lg italic text-muted-foreground" data-no-translate="true">{String(i + 1).padStart(2, "0")}</span>
                       <span className="flex h-11 w-11 items-center justify-center rounded-full border bg-background transition-colors duration-300 group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground">
@@ -516,6 +616,7 @@ export default function LandingPage() {
                     <h3 className="mb-3 mt-10 text-2xl font-normal tracking-[-0.03em]">{title}</h3>
                     <p className="text-lg text-muted-foreground">{desc}</p>
                   </Link>
+                  </Spotlight>
                 </StaggerItem>
               ))}
             </Stagger>
@@ -524,28 +625,15 @@ export default function LandingPage() {
 
         {/* ── How it works ── */}
         <section id="how-it-works" className="scroll-mt-24 px-4 sm:px-6">
-          <div className="mx-auto max-w-[1440px] rounded-[2rem] bg-ink py-16 text-white lg:py-24">
+          <ScaleInSection className="mx-auto max-w-[1440px] overflow-hidden rounded-[2rem] bg-ink py-16 text-white lg:py-24">
             <div className="mx-auto max-w-7xl px-6">
               <Reveal>
-                <h2 className="display-lg mb-10 lg:mb-16">
-                  Up and Running <em className="italic">in Minutes</em>
-                </h2>
+                <HeadingReveal className="display-lg mb-10 lg:mb-16" parts={["Up and Running", { italic: "in Minutes" }]} />
               </Reveal>
-              <Stagger className="mb-12 grid grid-cols-1 gap-5 md:grid-cols-3 lg:mb-16 lg:gap-8">
-                {steps.map((s, i) => (
-                  <StaggerItem key={s.title} className="rounded-[20px] border border-white/10 bg-white/[0.04] p-6 sm:p-8">
-                    <div className="flex justify-between font-mono text-base text-white/70">
-                      <span>STEP</span>
-                      <span data-no-translate="true">0{i + 1}</span>
-                    </div>
-                    <h3 className="mb-3 mt-16 text-2xl font-normal tracking-[-0.03em]">{s.title}</h3>
-                    <p className="text-lg text-white/65">{s.desc}</p>
-                  </StaggerItem>
-                ))}
-              </Stagger>
+              <StepsTimeline />
               <PillLink href="/sign-up" variant="light" arrow>Create free account</PillLink>
             </div>
-          </div>
+          </ScaleInSection>
         </section>
 
         {/* ── Karen ── */}
@@ -553,9 +641,7 @@ export default function LandingPage() {
           <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16">
             <Reveal>
               <p className="eyebrow mb-5 text-muted-foreground">AI assistant</p>
-              <h2 className="display-lg mb-6">
-                Say Hello to <em className="italic">Karen</em>
-              </h2>
+              <HeadingReveal className="display-lg mb-6" parts={["Say Hello to", { italic: "Karen" }]} />
               <p className="mb-8 text-lg text-muted-foreground">
                 Karen is your 24/7 city assistant. Ask in plain English or Tamil — she points you to the right service,
                 explains procedures step by step and answers questions about transport, taxes, parks and more.
@@ -618,10 +704,7 @@ export default function LandingPage() {
         {/* ── CTA ── */}
         <section className="bg-card py-14">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-6 sm:flex-row">
-            <h2 className="display-lg text-center sm:w-1/2 sm:text-left">
-              Ready to skip <br className="hidden sm:block" />
-              the <em className="italic">queue?</em>
-            </h2>
+            <HeadingReveal className="display-lg text-center sm:w-1/2 sm:text-left" parts={["Ready to skip", "the", { italic: "queue?" }]} />
             <div className="flex flex-col gap-4 sm:flex-row">
               <PillLink href="/sign-up" arrow>Create account</PillLink>
               <PillLink href="/sign-in" variant="outline">Sign in</PillLink>
@@ -657,6 +740,18 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <div className="overflow-hidden" aria-hidden>
+            <motion.p
+              initial={{ y: "70%", opacity: 0 }}
+              whileInView={{ y: "0%", opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1.2, ease: easeOutExpo }}
+              className="select-none pb-[0.12em] text-[19vw] font-normal leading-[0.85] tracking-[-0.07em] text-white/[0.07] lg:text-[14.5rem]"
+              data-no-translate="true"
+            >
+              SmartCity
+            </motion.p>
+          </div>
           <div className="flex flex-col items-center justify-between gap-4 border-t border-white/10 py-8 text-sm text-white/60 sm:flex-row">
             <p>© {new Date().getFullYear()} Department of Civic Technology. All rights reserved.</p>
             <div className="flex gap-6">
@@ -668,5 +763,6 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+    </MotionConfig>
   )
 }
