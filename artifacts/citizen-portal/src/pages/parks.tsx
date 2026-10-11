@@ -114,10 +114,10 @@ function ParkDirectionsMap({
             <div style="
               width: 36px; 
               height: 36px; 
-              background: #4f46e5; 
+              background: #1F1B6B; 
               border: 3px solid white; 
               border-radius: 50%; 
-              box-shadow: 0 4px 12px rgba(79,70,229,0.5);
+              box-shadow: 0 4px 12px rgba(20,92,73,0.5);
               display: flex;
               align-items: center;
               justify-content: center;

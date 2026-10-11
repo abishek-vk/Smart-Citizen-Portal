@@ -49,12 +49,12 @@ export default function Feedback() {
   return (
     <div className="max-w-2xl mx-auto space-y-8 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold font-serif mb-2">Help Us Improve</h1>
+        <h1 className="font-display text-4xl font-normal tracking-[-0.04em] mb-2">Help Us Improve</h1>
         <p className="text-muted-foreground">Your feedback directly influences how we build and maintain city services.</p>
       </div>
 
       <Card className="border-primary/20 shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-sky-500" />
+        <div className="absolute top-0 left-0 flex h-1.5 w-full"><span className="flex-[3] bg-primary" /><span className="flex-1 bg-secondary" /></div>
         <CardHeader className="pt-8">
           <CardTitle>Submit Feedback</CardTitle>
           <CardDescription>Rate your recent experience with the portal.</CardDescription>

@@ -77,7 +77,7 @@ function PaymentModal({ bill, type }: { bill: any, type: 'property' | 'water' })
 
         <div className="py-4 space-y-5">
           {/* Bill Summary Card */}
-          <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 rounded-xl border border-primary/20 flex justify-between items-center">
+          <div className="bg-accent/60 p-4 rounded-xl border border-primary/20 flex justify-between items-center">
             <div>
               <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
                 {type === 'property' ? 'Property Tax Bill' : 'Water Utility Bill'}
@@ -671,12 +671,12 @@ export default function Taxes() {
       {loadingSummary ? (
         <Skeleton className="h-36 w-full rounded-2xl" />
       ) : summary ? (
-        <Card className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border-transparent overflow-hidden relative shadow-xl">
-          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+        <Card className="grain bg-sidebar text-white border-transparent overflow-hidden relative shadow-lg">
+          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[36px] border-sidebar-primary/10" />
           <CardContent className="p-8 relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
-              <div className="flex items-center gap-2 text-indigo-300 font-medium text-xs tracking-wider uppercase mb-1">
-                <Receipt className="w-4 h-4 text-indigo-400" /> Municipal Dues Overview
+              <div className="flex items-center gap-2 eyebrow text-sidebar-primary mb-2">
+                <Receipt className="w-4 h-4" /> Municipal Dues Overview
               </div>
               <h2 className="text-4xl md:text-5xl font-extrabold font-serif tracking-tight text-white">
                 ₹{summary.totalDue.toFixed(2)}
@@ -693,11 +693,11 @@ export default function Taxes() {
             </div>
             <div className="grid grid-cols-2 gap-6 md:gap-10 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-8 text-left md:text-right w-full md:w-auto">
               <div>
-                <p className="text-indigo-200/80 text-xs font-medium mb-1">Property Tax Pending</p>
+                <p className="text-white/60 text-xs font-medium mb-1">Property Tax Pending</p>
                 <p className="text-2xl font-bold font-serif text-white">₹{summary.propertyTaxDue.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-indigo-200/80 text-xs font-medium mb-1">Water Tax Pending</p>
+                <p className="text-white/60 text-xs font-medium mb-1">Water Tax Pending</p>
                 <p className="text-2xl font-bold font-serif text-white">₹{summary.waterTaxDue.toFixed(2)}</p>
               </div>
             </div>

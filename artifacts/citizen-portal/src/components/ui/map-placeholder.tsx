@@ -32,7 +32,7 @@ export function LocationMapPlaceholder({
 
         const customIcon = L.divIcon({
           className: "mini-map-pin",
-          html: `<div style="width: 24px; height: 24px; background: #4f46e5; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>`,
+          html: `<div style="width: 24px; height: 24px; background: #1F1B6B; border: 2px solid white; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transform: translate(-50%, -50%);"></div>`,
           iconSize: [24, 24],
         })
 

@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Users, AlertCircle, TrendingUp, IndianRupee } from "lucide-react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts"
 import { format, parseISO } from "date-fns"
+import { CountUp, Stagger, StaggerItem } from "@/components/motion"
 
-const COLORS = ['#4f46e5', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'];
+const COLORS = [1, 2, 3, 4, 5].map((i) => `hsl(var(--chart-${i}))`);
 
 export default function AdminDashboard() {
   const { data, isLoading, isError, error, refetch } = useGetAdminDashboard()
@@ -46,58 +47,66 @@ export default function AdminDashboard() {
         description="City operations and performance overview."
       />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-primary text-primary-foreground border-none">
+      <Stagger inView={false} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StaggerItem>
+        <Card className="grain relative h-full overflow-hidden border-none bg-primary text-primary-foreground">
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-primary-foreground/80 font-medium text-sm">Total Citizens</p>
-                <h3 className="text-4xl font-bold font-serif mt-2">{data.totalCitizens.toLocaleString()}</h3>
+                <h3 className="mt-3 font-display text-4xl font-normal tracking-[-0.04em]"><CountUp value={data.totalCitizens} /></h3>
               </div>
-              <div className="p-3 bg-primary-foreground/10 rounded-lg"><Users className="w-5 h-5" /></div>
+              <div className="rounded-xl bg-primary-foreground/12 p-3 text-secondary"><Users className="w-5 h-5" /></div>
             </div>
           </CardContent>
         </Card>
+        </StaggerItem>
         
-        <Card>
+        <StaggerItem>
+        <Card className="h-full">
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-muted-foreground font-medium text-sm">Active Complaints</p>
-                <h3 className="text-4xl font-bold font-serif mt-2">{data.totalComplaints}</h3>
-                <p className="text-xs text-emerald-600 mt-2 font-medium flex items-center gap-1">
+                <h3 className="mt-3 font-display text-4xl font-normal tracking-[-0.04em]"><CountUp value={data.totalComplaints} /></h3>
+                <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-primary">
                   <TrendingUp className="w-3 h-3" /> {data.resolvedComplaintsToday} resolved today
                 </p>
               </div>
-              <div className="p-3 bg-amber-100 text-amber-600 rounded-lg"><AlertCircle className="w-5 h-5" /></div>
+              <div className="rounded-xl bg-secondary/15 p-3 text-secondary-foreground dark:text-secondary"><AlertCircle className="w-5 h-5" /></div>
             </div>
           </CardContent>
         </Card>
+        </StaggerItem>
 
-        <Card>
+        <StaggerItem>
+        <Card className="h-full">
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-muted-foreground font-medium text-sm">Revenue Today</p>
-                <h3 className="text-4xl font-bold font-serif mt-2">₹{(data.totalRevenue / 1000).toFixed(1)}k</h3>
+                <h3 className="mt-3 font-display text-4xl font-normal tracking-[-0.04em]"><CountUp value={data.totalRevenue / 1000} format={(n) => `₹${n.toFixed(1)}k`} /></h3>
               </div>
-              <div className="p-3 bg-emerald-100 text-emerald-600 rounded-lg"><IndianRupee className="w-5 h-5" /></div>
+              <div className="rounded-xl bg-accent p-3 text-accent-foreground"><IndianRupee className="w-5 h-5" /></div>
             </div>
           </CardContent>
         </Card>
+        </StaggerItem>
 
-        <Card>
+        <StaggerItem>
+        <Card className="h-full">
           <CardContent className="p-6">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-muted-foreground font-medium text-sm">Pending Certificates</p>
-                <h3 className="text-4xl font-bold font-serif mt-2">{data.pendingCertificates}</h3>
+                <h3 className="mt-3 font-display text-4xl font-normal tracking-[-0.04em]"><CountUp value={data.pendingCertificates} /></h3>
               </div>
-              <div className="p-3 bg-sky-100 text-sky-600 rounded-lg"><AlertCircle className="w-5 h-5" /></div>
+              <div className="rounded-xl bg-sky-500/12 p-3 text-sky-700 dark:text-sky-400"><AlertCircle className="w-5 h-5" /></div>
             </div>
           </CardContent>
         </Card>
-      </div>
+        </StaggerItem>
+      </Stagger>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -118,7 +127,7 @@ export default function AdminDashboard() {
                 <XAxis dataKey="date" tickFormatter={(v) => format(parseISO(v), 'MMM d')} stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `${v}`} />
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: 12 }}
                   labelFormatter={(v) => format(parseISO(String(v)), 'MMM d, yyyy')}
                 />
                 <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
@@ -141,7 +150,9 @@ export default function AdminDashboard() {
                   cy="50%"
                   innerRadius={60}
                   outerRadius={100}
-                  paddingAngle={2}
+                  paddingAngle={3}
+                  cornerRadius={4}
+                  stroke="none"
                   dataKey="count"
                   nameKey="status"
                 >
@@ -149,7 +160,7 @@ export default function AdminDashboard() {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                <RechartsTooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))', fontSize: 12 }} />
                 <Legend verticalAlign="bottom" height={36} formatter={(value, entry: any) => <span className="capitalize text-sm text-foreground">{String(value || entry?.payload?.status || entry?.value || '').replace(/_/g, ' ')}</span>} />
               </PieChart>
             </ResponsiveContainer>
@@ -168,11 +179,11 @@ export default function AdminDashboard() {
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v/1000}k`} />
                 <YAxis dataKey="type" type="category" stroke="hsl(var(--foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => String(v || '').replace(/_/g, ' ')} width={100} className="capitalize" />
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px' }}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '12px', border: '1px solid hsl(var(--border))', fontSize: 12 }}
                   formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, 'Revenue']}
                   labelFormatter={(v) => <span className="capitalize">{String(v || '').replace(/_/g, ' ')}</span>}
                 />
-                <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} barSize={32}>
+                <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} barSize={28}>
                   {data.revenueByType.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}

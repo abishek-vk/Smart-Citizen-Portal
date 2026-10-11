@@ -36,7 +36,10 @@ import AdminCertificates from "@/pages/admin/certificates";
 import AdminReports from "@/pages/admin/reports";
 import AdminAuditLogs from "@/pages/admin/audit-logs";
 
+import NotFound from "@/pages/not-found";
+
 import { MainLayout } from "@/components/layout/main-layout";
+import { BrandMark } from "@/components/brand";
 import { useGetProfile, setAuthTokenGetter, getGetProfileQueryKey } from "@workspace/api-client-react";
 
 const clerkPubKey =
@@ -67,24 +70,27 @@ const clerkAppearance = {
     logoImageUrl: `${window.location.origin}${basePath}/logo.svg`,
   },
   variables: {
-    colorPrimary: "hsl(243 75% 59%)",
-    colorForeground: "hsl(222 47% 11%)",
-    colorMutedForeground: "hsl(215 16% 47%)",
-    colorDanger: "hsl(0 84% 60%)",
+    colorPrimary: "hsl(244 60% 26%)",
+    colorPrimaryForeground: "hsl(0 0% 100%)",
+    colorForeground: "hsl(244 45% 12%)",
+    colorMutedForeground: "hsl(240 6% 38%)",
+    colorDanger: "hsl(0 72% 51%)",
     colorBackground: "hsl(0 0% 100%)",
     colorInput: "hsl(0 0% 100%)",
-    colorInputForeground: "hsl(222 47% 11%)",
-    colorNeutral: "hsl(214 32% 91%)",
+    colorInputForeground: "hsl(244 45% 12%)",
+    colorNeutral: "hsl(240 5% 88%)",
     fontFamily: "'Inter', sans-serif",
-    borderRadius: "0.75rem",
+    fontFamilyButtons: "'Inter', sans-serif",
+    borderRadius: "0.9rem",
   },
   elements: {
     rootBox: "w-full flex justify-center",
-    cardBox: "bg-white dark:bg-slate-900 rounded-2xl w-[440px] max-w-full overflow-hidden border shadow-xl",
+    cardBox: "bg-background rounded-[20px] w-[440px] max-w-full overflow-hidden border shadow-lg",
     card: "!shadow-none !border-0 !bg-transparent !rounded-none",
     footer: "!shadow-none !border-0 !bg-transparent !rounded-none",
-    socialButtonsBlockButtonText: "!font-semibold !text-slate-900 dark:!text-slate-100 !opacity-100",
-    socialButtonsBlockButton: "border border-slate-200 dark:border-slate-700 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors",
+    socialButtonsBlockButtonText: "!font-semibold !text-foreground !opacity-100",
+    socialButtonsBlockButton: "border border-border shadow-xs hover:bg-accent transition-colors",
+    formButtonPrimary: "!shadow-none !rounded-full",
     footerPages: "!hidden",
     devModeBadge: "!hidden",
   },
@@ -130,7 +136,7 @@ function ProtectedRoute({ component: Component, adminOnly = false }: { component
   const { isLoaded, isSignedIn } = useUser()
   const { data: profile, isLoading } = useGetProfile({ query: { enabled: !!isSignedIn, queryKey: getGetProfileQueryKey() } })
 
-  if (!isLoaded || (isSignedIn && isLoading)) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="animate-pulse w-8 h-8 rounded-full bg-primary/50" /></div>
+  if (!isLoaded || (isSignedIn && isLoading)) return <div className="min-h-screen bg-background flex items-center justify-center"><BrandMark className="h-10 w-10 animate-pulse" /></div>
   
   if (!isSignedIn) {
     return <Redirect to="/sign-in" />
@@ -204,13 +210,7 @@ function ClerkProviderWithRoutes() {
             <Route path="/admin/reports"><ProtectedRoute component={AdminReports} adminOnly /></Route>
             <Route path="/admin/audit-logs"><ProtectedRoute component={AdminAuditLogs} adminOnly /></Route>
             
-            <Route>
-              <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-                <h1 className="text-4xl font-bold font-serif mb-2">404</h1>
-                <p className="text-muted-foreground mb-4">Page not found</p>
-                <a href="/" className="text-primary hover:underline">Return home</a>
-              </div>
-            </Route>
+            <Route component={NotFound} />
           </Switch>
             <Toaster />
           </LanguageProvider>
