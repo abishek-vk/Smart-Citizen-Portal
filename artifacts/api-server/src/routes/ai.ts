@@ -133,10 +133,14 @@ const SYSTEM_PROMPT = [
 async function generateGroqResponse(sessionId: string, message: string, language: "en" | "ta"): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    return generateResponse(message);
+    throw new Error("GROQ_API_KEY is not set");
   }
 
-  const model = process.env.GROQ_MODEL ?? "llama-3.1-8b-instant";
+  const model = process.env.GROQ_MODEL || "openai/gpt-oss-20b";
+  // gpt-oss models are reasoning models; keep reasoning short and out of the reply content
+  const reasoningOptions = model.startsWith("openai/gpt-oss")
+    ? { reasoning_effort: "low", include_reasoning: false }
+    : {};
 
   // Fetch prior history (before the current message was saved) so we get at most 9 prior turns
   const recentMessages = await db.select().from(chatHistoryTable)
@@ -172,7 +176,8 @@ async function generateGroqResponse(sessionId: string, message: string, language
       model,
       messages,
       temperature: 0.4,
-      max_tokens: 512,
+      max_tokens: 1024,
+      ...reasoningOptions,
     }),
   });
 
@@ -211,8 +216,9 @@ router.post("/ai/chat", requireAuth, ensureUser, async (req, res): Promise<void>
     : generateResponse(parsed.data.message);
   try {
     responseText = await generateGroqResponse(sessionId, parsed.data.message, language);
-  } catch {
+  } catch (err) {
     // Fall back to the existing local assistant response when the remote API is unavailable.
+    req.log?.warn({ err }, "Groq request failed; using local fallback response");
   }
   const suggestions = [
     "How do I file a complaint?",
