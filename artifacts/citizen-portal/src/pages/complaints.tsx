@@ -10,6 +10,7 @@ import { LocationMapPlaceholder } from "@/components/ui/map-placeholder"
 import { useQueryClient } from "@tanstack/react-query"
 import { getListComplaintsQueryKey } from "@workspace/api-client-react"
 import { useState } from "react"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForm } from "react-hook-form"
@@ -158,13 +159,16 @@ function ComplaintCard({ complaint }: { complaint: any }) {
     analyzeMutation.mutate(
       { id: complaint.id },
       {
-        onSuccess: () => {
-          toast({ title: "AI Analysis complete", description: "The complaint has been enriched." })
+        onSuccess: (analysis) => {
+          toast({
+            title: "AI Analysis complete",
+            description: `${analysis.suggestedDepartment} · ${analysis.priority} priority · about ${analysis.estimatedResolutionTime}`,
+          })
           queryClient.invalidateQueries({ queryKey: getListComplaintsQueryKey() })
           setAnalyzing(false)
         },
-        onError: () => {
-          toast({ title: "Analysis failed", variant: "destructive" })
+        onError: (error) => {
+          toast({ title: "Analysis failed", description: error.message, variant: "destructive" })
           setAnalyzing(false)
         }
       }
@@ -203,12 +207,15 @@ function ComplaintCard({ complaint }: { complaint: any }) {
             <span className="truncate">{complaint.location}</span>
           </div>
           
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             className="text-xs h-8 text-primary hover:text-primary hover:bg-primary/10 gap-1.5"
             onClick={handleAnalyze}
             disabled={analyzing || !!complaint.aiCategory}
+            title={complaint.aiCategory
+              ? `AI: ${complaint.aiCategory.replace('_', ' ')} · ${complaint.aiPriority} priority · about ${complaint.estimatedResolution}`
+              : undefined}
           >
             {complaint.aiCategory ? (
               <><ScanSearch className="w-3.5 h-3.5" /> Analyzed</>
@@ -224,13 +231,40 @@ function ComplaintCard({ complaint }: { complaint: any }) {
   )
 }
 
+type StatusFilter = "all" | "pending" | "in_progress" | "resolved" | "closed"
+
+const categoryOptions: { value: string; label: string }[] = [
+  { value: "roads", label: "Roads & Infrastructure" },
+  { value: "water", label: "Water Supply" },
+  { value: "electricity", label: "Electricity" },
+  { value: "garbage", label: "Garbage & Sanitation" },
+  { value: "street_lights", label: "Street Lights" },
+  { value: "drainage", label: "Drainage" },
+  { value: "transport", label: "Transport" },
+  { value: "public_safety", label: "Public Safety" },
+  { value: "environment", label: "Environment" },
+  { value: "other", label: "Other" },
+]
+
 export default function Complaints() {
-  const { data, isLoading } = useListComplaints()
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
+  const [categoryFilter, setCategoryFilter] = useState("all")
+  const activeFilters = (statusFilter !== "all" ? 1 : 0) + (categoryFilter !== "all" ? 1 : 0)
+
+  const { data, isLoading } = useListComplaints({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    category: categoryFilter === "all" ? undefined : categoryFilter,
+  })
+
+  const clearFilters = () => {
+    setStatusFilter("all")
+    setCategoryFilter("all")
+  }
 
   return (
     <div className="space-y-6">
-      <PageHeader 
-        title="Complaints" 
+      <PageHeader
+        title="Complaints"
         description="Report and track civic issues."
       >
         <NewComplaintDialog />
@@ -238,7 +272,46 @@ export default function Complaints() {
 
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
-          <Button variant="outline" size="sm"><Filter className="w-4 h-4 mr-2" /> Filter</Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Filter className="w-4 h-4 mr-2" /> Filter
+                {activeFilters > 0 && (
+                  <Badge className="ml-2 h-5 px-1.5 shadow-none">{activeFilters}</Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-64 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</label>
+                <Select value={statusFilter} onValueChange={(v: StatusFilter) => setStatusFilter(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="resolved">Resolved</SelectItem>
+                    <SelectItem value="closed">Closed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Category</label>
+                <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categoryOptions.map(c => (
+                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full" onClick={clearFilters} disabled={activeFilters === 0}>
+                Clear filters
+              </Button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -266,8 +339,17 @@ export default function Complaints() {
             <AlertCircle className="w-8 h-8 text-muted-foreground" />
           </div>
           <CardTitle className="mb-2">No complaints found</CardTitle>
-          <p className="text-muted-foreground mb-6 max-w-sm">You haven't filed any complaints yet. If you spot an issue in the city, report it here.</p>
-          <NewComplaintDialog />
+          {activeFilters > 0 ? (
+            <>
+              <p className="text-muted-foreground mb-6 max-w-sm">No complaints match these filters.</p>
+              <Button variant="outline" onClick={clearFilters}>Clear filters</Button>
+            </>
+          ) : (
+            <>
+              <p className="text-muted-foreground mb-6 max-w-sm">You haven't filed any complaints yet. If you spot an issue in the city, report it here.</p>
+              <NewComplaintDialog />
+            </>
+          )}
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

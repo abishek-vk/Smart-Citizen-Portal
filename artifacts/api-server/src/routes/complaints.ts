@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db, complaintsTable, usersTable } from "@workspace/db";
 import { eq, and, sql, count, avg, desc, ilike, or, inArray, isNotNull } from "drizzle-orm";
-import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
+import { requireAuth, ensureUser } from "../lib/auth";
 import {
   ListComplaintsQueryParams, CreateComplaintBody, UpdateComplaintBody,
   GetComplaintParams, UpdateComplaintParams, AnalyzeComplaintParams,
@@ -132,11 +132,14 @@ router.patch("/complaints/:id", requireAuth, ensureUser, async (req, res): Promi
   res.json({ ...updated, user: userRow });
 });
 
-router.post("/complaints/:id/ai-analysis", requireAuth, ensureUser, requireAdmin, async (req, res): Promise<void> => {
+router.post("/complaints/:id/ai-analysis", requireAuth, ensureUser, async (req, res): Promise<void> => {
   const params = AnalyzeComplaintParams.safeParse(req.params);
   if (!params.success) { res.status(400).json({ error: "Invalid ID" }); return; }
+  const user = (req as any).user;
   const [complaint] = await db.select().from(complaintsTable).where(eq(complaintsTable.id, params.data.id));
   if (!complaint) { res.status(404).json({ error: "Not found" }); return; }
+  const isAdmin = user.role === "admin" || user.role === "super_admin";
+  if (!isAdmin && complaint.userId !== user.id) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const text = `${complaint.title} ${complaint.description} ${complaint.location}`.toLowerCase();
   const categoryRules = [
