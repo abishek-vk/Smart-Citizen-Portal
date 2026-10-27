@@ -12,6 +12,8 @@ import { getGetChatHistoryQueryKey } from "@workspace/api-client-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/components/language-provider"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AIAssistant() {
   const [input, setInput] = useState("")
@@ -23,6 +25,8 @@ export default function AIAssistant() {
   const sendMutation = useSendChatMessage()
   const clearMutation = useClearChatHistory()
   const queryClient = useQueryClient()
+  const { toast } = useToast()
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null)
 
   // Restore sessionId from existing history on first load
   useEffect(() => {
@@ -36,18 +40,30 @@ export default function AIAssistant() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [history])
+  }, [history, pendingMessage])
 
   const sendMessage = (message: string) => {
     if (!message.trim() || sendMutation.isPending) return
+    // Show the user's message immediately while Karen is replying
+    setPendingMessage(message)
     sendMutation.mutate({ data: { message, sessionId, language } }, {
-      onSuccess: (response) => {
+      onSuccess: async (response) => {
         // Persist the sessionId returned by the server
         if (response?.sessionId) {
           setSessionId(response.sessionId)
         }
-        queryClient.invalidateQueries({ queryKey: getGetChatHistoryQueryKey() })
-      }
+        await queryClient.invalidateQueries({ queryKey: getGetChatHistoryQueryKey() })
+        setPendingMessage(null)
+      },
+      onError: (err: any) => {
+        setPendingMessage(null)
+        setInput(message)
+        toast({
+          title: "Karen couldn't reply",
+          description: err?.message || "Something went wrong. Please try again.",
+          variant: "destructive",
+        })
+      },
     })
   }
 
@@ -94,7 +110,7 @@ export default function AIAssistant() {
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <KarenAvatar className="h-10 w-10 animate-pulse" />
             </div>
-          ) : history?.length === 0 ? (
+          ) : history?.length === 0 && !pendingMessage ? (
             <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
               <div className="relative mb-6">
                 <KarenAvatar className="h-16 w-16 text-2xl" />
@@ -133,8 +149,8 @@ export default function AIAssistant() {
                       : "bg-muted rounded-tl-md"
                   )}>
                     {msg.role === 'assistant' ? (
-                      <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 prose-ol:my-1 prose-ul:my-1 prose-li:my-0.5">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                      <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto prose-p:my-1 prose-headings:my-2 prose-ol:my-1 prose-ul:my-1 prose-li:my-0.5 prose-table:my-2 prose-th:px-2 prose-td:px-2">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                       </div>
                     ) : (
                       msg.content
@@ -142,7 +158,17 @@ export default function AIAssistant() {
                   </div>
                 </motion.div>
               ))}
-              {sendMutation.isPending && (
+              {pendingMessage && (
+                <div className="flex gap-3 max-w-[85%] ml-auto flex-row-reverse">
+                  <div className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center bg-accent text-accent-foreground">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div className="px-4 py-3 rounded-2xl text-sm leading-relaxed bg-primary text-primary-foreground rounded-tr-md">
+                    {pendingMessage}
+                  </div>
+                </div>
+              )}
+              {pendingMessage && (
                 <div className="flex gap-3 max-w-[85%]">
                   <KarenAvatar className="h-8 w-8 text-sm" />
                   <div className="px-4 py-3 rounded-2xl bg-muted rounded-tl-md flex items-center gap-1.5">

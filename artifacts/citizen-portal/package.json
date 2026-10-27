@@ -78,7 +78,8 @@
     "dotenv": "^17.2.2",
     "leaflet": "^1.9.4",
     "react-leaflet": "^5.0.0",
-    "react-markdown": "^9.1.0"
+    "react-markdown": "^9.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "optionalDependencies": {
     "@rollup/rollup-win32-x64-msvc": "4.62.2",

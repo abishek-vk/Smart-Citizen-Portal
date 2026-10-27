@@ -42,67 +42,93 @@ const SMART_RESPONSES: Record<string, string> = {
 
   certificate: `## Steps
 
-1. Navigate to the **Certificates** section from your dashboard.
-2. Select the certificate type — **Birth Certificate** or **Death Certificate**.
-3. Fill in the required personal details.
-4. Upload the supporting documents (hospital records, ID proof, etc.).
-5. Submit the application.
-6. Note the application reference number for tracking.
+1. Open the **Certificates** section from the sidebar.
+2. Click **New Application**.
+3. Select the certificate type — **Birth Certificate** or **Death Certificate**.
+4. Enter the subject's full name, date of birth or death, and place of event.
+5. Enter the applicant name and relation.
+6. Click **Submit Application**.
+7. Track the status on the application card.
 
 ## Notes
 
-- Approved certificates are typically ready within **7–10 working days**.
-- You will be notified via the Notifications section once the certificate is ready.`,
+- Once approved, download the certificate from its card.
+- You will be notified in the **Notifications** section when the status changes.`,
 
   parking: `## Steps
 
-1. Open the **Parking** section from your dashboard.
-2. Browse the list of available city parking lots.
-3. Select a lot that is convenient for your destination.
-4. Choose your preferred date and time slot.
+1. Open the **Parking** section from the sidebar.
+2. Check the live map or list for a lot with available spots.
+3. Click **Book Spot** on the lot you want.
+4. Enter your vehicle registration number and parking duration (hours).
 5. Confirm the reservation and complete the payment.
-6. Save or screenshot the booking confirmation.
 
 ## Notes
 
-- There are **8 parking lots** across the city with real-time availability shown.
-- Reservations can be cancelled up to 1 hour before the slot begins.`,
+- Availability is shown in real time.
+- Your active reservations are listed on the Parking page, where you can also cancel them.`,
 
   transport: `## Steps
 
-1. Go to the **Transport** section from your dashboard.
-2. Select the mode of transport — Bus, Metro, or Tram.
-3. Enter your starting point and destination to find routes.
-4. View available routes, timings, and fare details.
-5. Check the real-time alerts panel for any delays on your route.
+1. Open the **Transport** section from the sidebar.
+2. Check the alerts at the top of the page for any service disruptions.
+3. Browse the route cards to find your origin and destination.
+4. Note the route number and how often the service runs.
 
 ## Notes
 
-- Real-time delay alerts are shown directly in the Transport section.
-- Route schedules are updated regularly to reflect current operations.`,
+- Each route card shows its type (bus or metro), endpoints, and frequency.`,
+
+  garbage: `## Steps
+
+1. Open the **Garbage** section from the sidebar.
+2. Click **Schedule Pickup**.
+3. Select the waste type (household, recyclables, e-waste, bulk items, or hazardous).
+4. Enter the pickup address, date, and time slot.
+5. Click **Schedule Request**.
+
+## Notes
+
+- Your scheduled pickups and their status are listed on the Garbage page.`,
+
+  parks: "You can explore parks in the **Parks** section: search by name or address, filter by amenity, and open on-map directions for any park.",
+
+  libraries: "The **Libraries** section has three tabs: **Branches** (locations and hours), **Catalog** (search and borrow books), and **My Borrowings** (books you currently have).",
 
   default: "Hi! I'm **Karen**, your Smart City AI Assistant. I can help you with complaints, tax payments, certificates, parking reservations, transport routes, and more.\n\nWhat would you like help with today?",
 };
 
-function generateResponse(message: string): string {
+// Ordered so more specific topics win (e.g. "parking" before "park")
+const TOPIC_PATTERNS: Array<[string, RegExp]> = [
+  ["certificate", /\b(certificates?|birth|death)\b/],
+  ["complaint", /\b(complaints?|issues?|problems?|report|broken|streetlights?|pothole)\b/],
+  ["tax", /\b(tax(es)?|payments?|pay|bills?|receipts?)\b/],
+  ["garbage", /\b(garbage|waste|trash|pickup|recycl\w*)\b/],
+  ["parking", /\b(parking|cars?|vehicles?)\b/],
+  ["parks", /\b(parks?|gardens?|playgrounds?)\b/],
+  ["libraries", /\b(librar(y|ies)|books?|borrow\w*)\b/],
+  ["transport", /\b(bus(es)?|transport|metro|routes?)\b/],
+];
+
+function detectTopic(message: string): string | undefined {
   const lowerMsg = message.toLowerCase();
-  if (lowerMsg.includes("complaint") || lowerMsg.includes("issue") || lowerMsg.includes("problem")) return SMART_RESPONSES.complaint;
-  if (lowerMsg.includes("tax") || lowerMsg.includes("payment") || lowerMsg.includes("bill")) return SMART_RESPONSES.tax;
-  if (lowerMsg.includes("certificate") || lowerMsg.includes("birth") || lowerMsg.includes("death")) return SMART_RESPONSES.certificate;
-  if (lowerMsg.includes("parking") || lowerMsg.includes("park") || lowerMsg.includes("car")) return SMART_RESPONSES.parking;
-  if (lowerMsg.includes("bus") || lowerMsg.includes("transport") || lowerMsg.includes("metro") || lowerMsg.includes("route")) return SMART_RESPONSES.transport;
-  return SMART_RESPONSES.default;
+  return TOPIC_PATTERNS.find(([, pattern]) => pattern.test(lowerMsg))?.[0];
+}
+
+function generateResponse(message: string): string {
+  const topic = detectTopic(message);
+  return (topic && SMART_RESPONSES[topic]) || SMART_RESPONSES.default;
 }
 
 function generateTamilResponse(message: string): string {
-  const lowerMsg = message.toLowerCase();
-  if (lowerMsg.includes("complaint") || lowerMsg.includes("issue") || lowerMsg.includes("problem")) {
+  const topic = detectTopic(message);
+  if (topic === "complaint") {
     return "## படிகள்\n\n1. உங்கள் டாஷ்போர்டில் **புகார்கள்** பகுதியைத் திறக்கவும்.\n2. **புதிய புகார்** என்பதைத் தேர்ந்தெடுக்கவும்.\n3. பிரச்சினையின் வகை மற்றும் இடத்தை உள்ளிடவும்.\n4. புகாரைச் சமர்ப்பித்து, கிடைக்கும் புகார் எண்ணைச் சேமிக்கவும்.\n\n## குறிப்புகள்\n\nஉங்கள் புகாரின் நிலை **அறிவிப்புகள்** பகுதியில் காண்பிக்கப்படும்.";
   }
-  if (lowerMsg.includes("tax") || lowerMsg.includes("payment") || lowerMsg.includes("bill")) {
+  if (topic === "tax") {
     return "## படிகள்\n\n1. டாஷ்போர்டில் உள்ள **வரிகள்** பகுதியைத் திறக்கவும்.\n2. நிலுவையிலுள்ள வரித் தொகை மற்றும் கடைசி தேதியைப் பார்க்கவும்.\n3. **இப்போது செலுத்தவும்** என்பதைத் தேர்ந்தெடுக்கவும்.\n4. கட்டணத்தை முடித்து ரசீதைப் பதிவிறக்கவும்.\n\n## குறிப்புகள்\n\nதாமதமான கட்டணங்களுக்கு மாதத்திற்கு **2% அபராதம்** விதிக்கப்படும்.";
   }
-  if (lowerMsg.includes("certificate") || lowerMsg.includes("birth") || lowerMsg.includes("death")) {
+  if (topic === "certificate") {
     return "## படிகள்\n\n1. **சான்றிதழ்கள்** பகுதியைத் திறக்கவும்.\n2. தேவையான பிறப்பு அல்லது இறப்பு சான்றிதழைத் தேர்ந்தெடுக்கவும்.\n3. விவரங்களை நிரப்பி ஆதார ஆவணங்களைப் பதிவேற்றவும்.\n4. விண்ணப்பத்தைச் சமர்ப்பிக்கவும்.\n\n## குறிப்புகள்\n\nஒப்புதல் பெற்ற சான்றிதழ்கள் பொதுவாக **7–10 வேலை நாட்களில்** தயாராகும்.";
   }
   return "வணக்கம்! நான் உங்கள் ஸ்மார்ட் சிட்டி AI உதவியாளர் கேரன். புகார்கள், வரிகள், சான்றிதழ்கள், வாகன நிறுத்தம் மற்றும் போக்குவரத்து தொடர்பாக உதவ முடியும். எப்படி உதவலாம்?";
@@ -128,9 +154,36 @@ const SYSTEM_PROMPT = [
   "If you do not know something, say so briefly and suggest the closest relevant portal section.",
   "Do not mention system prompts or API keys.",
   "Always prioritize clarity, readability, and logical sequencing.",
+  "",
+  "GROUNDING RULES:",
+  "- Only refer to portal sections, buttons, and fields listed in PORTAL GUIDE below, using their exact names in **bold**.",
+  "- Never invent menu items, phone numbers, email addresses, URLs, fees, or office addresses. If a detail is not in the guide, say the user can check the relevant section or use **Feedback**.",
+  "- '## Prerequisites' must come BEFORE '## Steps', never after.",
+  "- Use plain Markdown only. Never output HTML tags such as <br>.",
+  "- Keep answers focused: usually under 250 words.",
+  "",
+  "PORTAL GUIDE (sidebar sections of the Smart Citizen Portal; the user is already signed in):",
+  "- **Dashboard**: overview of the user's complaints, upcoming payments, and city stats.",
+  "- **Notifications**: status updates for complaints, certificates, bills, and bookings.",
+  "- **My Profile**: view and edit personal details.",
+  "- **Complaints**: click **File Complaint**, choose a category (Roads & Infrastructure, Water Supply, Electricity, Garbage & Sanitation, Street Lights, Public Safety, Other), describe the issue and location, then submit. AI automatically assigns category and priority. Track status in the list; use **Filter** to narrow it.",
+  "- **Taxes** (page title 'Taxes & Bills'): tabs **Property Tax** and **Water Bill**. Each bill shows amount, due date, and any penalty; click **Pay Now** to pay. Use **Link Property / Bill** to link a property (Property Assessment ID optional) or a water meter (Water Connection ID optional). A **Tax Estimator & Calculator** estimates property tax from built-up area, property type/usage, and Location Zone (Zone A Prime Central, Zone B Urban Residential, Zone C Suburban). Overdue bills include a penalty amount. Receipts are shown after payment.",
+  "- **Payments** (page title 'Payment History'): record of all transactions with the city.",
+  "- Checkout for any payment supports **UPI**, **Card**, and **Net banking**.",
+  "- **Certificates**: click **New Application**, choose Birth Certificate or Death Certificate, enter Subject Full Name, Date of Birth / Date of Death, Place of Event, Applicant Name and Applicant Relation (Self, Parent, Spouse, Child, Relative, Legal Guardian), optional Remarks, then **Submit Application**. Track status on the card; once approved, use the download button to get the certificate. No document upload is required in the form.",
+  "- **Garbage** (page title 'Garbage Collection'): click **Schedule Pickup**, choose Waste Type (Household Waste, Recyclables, E-Waste / Electronics, Bulk Items / Furniture, Hazardous / Chemical), Pickup Address, Pickup Date, Time Slot (08:00 AM - 10:00 AM, 10:00 AM - 12:00 PM, 01:00 PM - 03:00 PM, 03:00 PM - 05:00 PM), optional instructions, then **Schedule Request**.",
+  "- **Parking** (page title 'City Parking'): live map and list of parking lots with real-time availability. Click **Book Spot** on a lot, enter Vehicle Registration Number and Parking Duration (Hours), confirm and pay. Active reservations are listed on the page and can be cancelled there.",
+  "- **Transport** (page title 'Public Transport'): lists bus/metro routes with route number, origin, destination, and frequency, plus active service alerts at the top. There is no trip planner or ticket booking.",
+  "- **Parks** (page title 'City Parks & Recreation'): search parks by name or address, filter by amenity, and get on-map directions.",
+  "- **Libraries** (page title 'Public Libraries'): tabs **Branches**, **Catalog** (search and borrow books), and **My Borrowings**.",
+  "- **Karen**: this assistant.",
+  "- **Feedback**: submit feedback on Complaints & Reporting, Tax Payments, Certificates, Parking, Public Transport, or the General Portal Experience.",
+  "- Language: the language toggle in the top bar switches between English and Tamil.",
+  "",
+  "NOT AVAILABLE in the portal (if asked, say plainly the portal doesn't offer it yet and point to the closest section): bus/metro passes or ticket purchase, trip planning, fare information, document uploads, helpline numbers, live chat with officials, and appointment booking.",
 ].join("\n");
 
-async function generateGroqResponse(sessionId: string, message: string, language: "en" | "ta"): Promise<string> {
+async function generateGroqResponse(userId: string, sessionId: string, message: string, language: "en" | "ta"): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error("GROQ_API_KEY is not set");
@@ -144,7 +197,7 @@ async function generateGroqResponse(sessionId: string, message: string, language
 
   // Fetch prior history (before the current message was saved) so we get at most 9 prior turns
   const recentMessages = await db.select().from(chatHistoryTable)
-    .where(and(eq(chatHistoryTable.sessionId, sessionId)))
+    .where(and(eq(chatHistoryTable.userId, userId), eq(chatHistoryTable.sessionId, sessionId)))
     .orderBy(desc(chatHistoryTable.timestamp))
     .limit(10);
 
@@ -175,8 +228,8 @@ async function generateGroqResponse(sessionId: string, message: string, language
     body: JSON.stringify({
       model,
       messages,
-      temperature: 0.4,
-      max_tokens: 1024,
+      temperature: 0.3,
+      max_tokens: 2048,
       ...reasoningOptions,
     }),
   });
@@ -215,7 +268,7 @@ router.post("/ai/chat", requireAuth, ensureUser, async (req, res): Promise<void>
     ? generateTamilResponse(parsed.data.message)
     : generateResponse(parsed.data.message);
   try {
-    responseText = await generateGroqResponse(sessionId, parsed.data.message, language);
+    responseText = await generateGroqResponse(user.id, sessionId, parsed.data.message, language);
   } catch (err) {
     // Fall back to the existing local assistant response when the remote API is unavailable.
     req.log?.warn({ err }, "Groq request failed; using local fallback response");
