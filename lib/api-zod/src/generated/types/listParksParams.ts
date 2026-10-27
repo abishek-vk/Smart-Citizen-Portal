@@ -7,5 +7,9 @@
  */
 
 export type ListParksParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 search?: string;
 };

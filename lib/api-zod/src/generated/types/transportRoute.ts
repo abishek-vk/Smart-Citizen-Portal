@@ -12,6 +12,8 @@ export interface TransportRoute {
   routeNumber: string;
   name: string;
   type: TransportRouteType;
+  /** @nullable */
+  district?: string | null;
   origin: string;
   destination: string;
   frequency: number;

@@ -12,9 +12,12 @@ import { Label } from "@/components/ui/label"
 import { Car, MapPin, Map as MapIcon, Clock, CheckCircle2, Navigation } from "lucide-react"
 import { LiveCityMap } from "@/components/ui/live-city-map"
 import { toast } from "sonner"
+import { DistrictSelect } from "@/components/district-select"
+import { useDistrict } from "@/lib/districts"
 
 export default function Parking() {
-  const { data: lots, isLoading: loadingLots, refetch: refetchLots } = useListParkingLots()
+  const [district, setDistrict] = useDistrict()
+  const { data: lots, isLoading: loadingLots, refetch: refetchLots } = useListParkingLots({ district })
   const { data: reservations, isLoading: loadingReservations, refetch: refetchReservations } = useListParkingReservations()
   const createReservation = useCreateParkingReservation()
 
@@ -68,8 +71,10 @@ export default function Parking() {
     <div className="space-y-6">
       <PageHeader
         title="City Parking"
-        description="Find live available parking spots on the city map and manage your reservations."
-      />
+        description={`Find available parking in ${district} on the map and manage your reservations.`}
+      >
+        <DistrictSelect value={district} onChange={(d) => { setDistrict(d); setSelectedLotId(null) }} />
+      </PageHeader>
 
       <Tabs defaultValue="map" className="w-full">
         <TabsList className="mb-6">
@@ -92,12 +97,12 @@ export default function Parking() {
               onSelectMarker={(id) => setSelectedLotId(id)}
               onBookSpot={(id) => handleOpenBooking(id)}
               height="420px"
-              title="Live Interactive Parking Map — Real-Time Availability"
+              title={`Parking in ${district}`}
             />
           )}
 
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-serif">Available Parking Garages</h2>
+            <h2 className="text-xl font-bold font-serif">Parking in {district}</h2>
             <p className="text-sm text-muted-foreground">Click a lot to locate on map</p>
           </div>
 

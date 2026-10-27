@@ -14,9 +14,8 @@ import {
 } from "lucide-react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
-
-// Default citizen start location (Coimbatore City Center)
-const USER_LOCATION: [number, number] = [11.0168, 76.9558]
+import { DistrictSelect } from "@/components/district-select"
+import { getDistrictCenter, useDistrict } from "@/lib/districts"
 
 function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371
@@ -34,6 +33,8 @@ function calculateDistanceKm(lat1: number, lon1: number, lat2: number, lon2: num
 function ParkDirectionsMap({ 
   latitude, 
   longitude, 
+  origin,
+  originLabel,
   parkName, 
   address, 
   showDirections, 
@@ -41,6 +42,8 @@ function ParkDirectionsMap({
 }: { 
   latitude: number
   longitude: number
+  origin: [number, number]
+  originLabel: string
   parkName: string
   address: string
   showDirections: boolean
@@ -133,15 +136,15 @@ function ParkDirectionsMap({
         iconAnchor: [18, 36],
       })
 
-      L.marker(USER_LOCATION, { icon: userIcon })
+      L.marker(origin, { icon: userIcon })
         .addTo(map)
-        .bindPopup("<strong>Your Location</strong><br/>Gandhipuram City Center")
+        .bindPopup(`<strong>Start</strong><br/>${originLabel}`)
 
       // Polyline route calculation
-      const midLat = (USER_LOCATION[0] + latitude) / 2 + (USER_LOCATION[0] > latitude ? 0.005 : -0.005)
-      const midLng = (USER_LOCATION[1] + longitude) / 2 + (USER_LOCATION[1] > longitude ? -0.005 : 0.005)
+      const midLat = (origin[0] + latitude) / 2 + (origin[0] > latitude ? 0.005 : -0.005)
+      const midLng = (origin[1] + longitude) / 2 + (origin[1] > longitude ? -0.005 : 0.005)
       const routePoints: [number, number][] = [
-        USER_LOCATION,
+        origin,
         [midLat, midLng],
         [latitude, longitude]
       ]
@@ -155,12 +158,12 @@ function ParkDirectionsMap({
         dashArray: travelMode === 'walking' ? '8, 8' : undefined,
       }).addTo(map)
 
-      const bounds = L.latLngBounds([USER_LOCATION, [latitude, longitude]])
+      const bounds = L.latLngBounds([origin, [latitude, longitude]])
       map.fitBounds(bounds, { padding: [50, 50] })
     } else {
       map.setView([latitude, longitude], 15)
     }
-  }, [latitude, longitude, parkName, address, showDirections, travelMode])
+  }, [latitude, longitude, origin[0], origin[1], originLabel, parkName, address, showDirections, travelMode])
 
   useEffect(() => {
     return () => {
@@ -197,7 +200,10 @@ function ParkDetailModal({
 
   if (!park) return null
 
-  const distanceKm = calculateDistanceKm(USER_LOCATION[0], USER_LOCATION[1], park.latitude, park.longitude)
+  // Directions start from the district headquarters, since the citizen's own location isn't known
+  const origin = getDistrictCenter(park.district)
+  const originLabel = `${park.district ?? "City"} city centre`
+  const distanceKm = calculateDistanceKm(origin[0], origin[1], park.latitude, park.longitude)
   
   // Dynamic ETAs based on mode
   const etaMinutes = travelMode === 'driving' 
@@ -207,17 +213,17 @@ function ParkDetailModal({
     : Math.max(12, Math.round(distanceKm * 12))
 
   const directionsSteps = travelMode === 'driving' ? [
-    { title: "Start from City Center", desc: "Head south on Cross Cut Road towards Avinashi Flyover" },
-    { title: `Turn onto Main Arterial`, desc: `Follow signs towards ${park.name} zone (${Math.round(distanceKm * 0.6 * 10) / 10} km)` },
-    { title: "Arrive at Entrance", desc: `Turn right into ${park.address} parking gates` }
+    { title: `Start from ${originLabel}`, desc: `About ${distanceKm} km to the park in a straight line` },
+    { title: "Follow signs for the park", desc: `Head towards ${park.name}` },
+    { title: "Arrive at the entrance", desc: park.address }
   ] : travelMode === 'transit' ? [
-    { title: "Board Bus B-101", desc: "Depart from Gandhipuram Central Terminal" },
-    { title: "Ride 3 stops", desc: `Get off at ${park.name} Stop (~${etaMinutes - 3} mins)` },
-    { title: "Walk to Gate", desc: "Walk 120m to the main visitor kiosk" }
+    { title: "Take a town bus", desc: `Board from the main bus stand in ${park.district ?? "the city"}` },
+    { title: "Get off near the park", desc: `Ask for the stop nearest ${park.name} (~${Math.max(1, etaMinutes - 5)} mins)` },
+    { title: "Walk to the gate", desc: park.address }
   ] : [
-    { title: "Walk along pedestrian path", desc: "Follow greenway track towards south sector" },
-    { title: "Cross pedestrian zebra crossing", desc: "Safely navigate across Park Avenue signal" },
-    { title: "Enter Park Premises", desc: `Reach ${park.name} entry gate` }
+    { title: `Start from ${originLabel}`, desc: `About ${distanceKm} km on foot` },
+    { title: "Follow the main road", desc: `Head towards ${park.name}` },
+    { title: "Enter the park", desc: park.address }
   ]
 
   return (
@@ -351,6 +357,8 @@ function ParkDetailModal({
             <ParkDirectionsMap 
               latitude={park.latitude} 
               longitude={park.longitude} 
+              origin={origin}
+              originLabel={originLabel}
               parkName={park.name} 
               address={park.address} 
               showDirections={showDirections}
@@ -387,10 +395,16 @@ function ParkDetailModal({
 
 // Main Parks Component
 export default function Parks() {
-  const { data: parks, isLoading } = useListParks()
+  const [district, setDistrict] = useDistrict()
+  const { data: parks, isLoading } = useListParks({ district })
   const [selectedPark, setSelectedPark] = useState<any | null>(null)
   const [search, setSearch] = useState('')
   const [amenityFilter, setAmenityFilter] = useState('all')
+
+  const amenityOptions = useMemo(
+    () => [...new Set((parks ?? []).flatMap((p) => p.amenities ?? []))].sort(),
+    [parks],
+  )
 
   const filteredParks = useMemo(() => {
     if (!parks) return []
@@ -408,8 +422,10 @@ export default function Parks() {
     <div className="space-y-6 pb-12">
       <PageHeader 
         title="City Parks & Recreation" 
-        description="Explore green spaces, civic gardens, recreational facilities, and get on-site map directions."
-      />
+        description={`Parks, gardens and green spaces in ${district}, with on-site map directions.`}
+      >
+        <DistrictSelect value={district} onChange={(d) => { setDistrict(d); setAmenityFilter('all') }} />
+      </PageHeader>
 
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card p-3.5 rounded-xl border shadow-sm">
@@ -433,11 +449,9 @@ export default function Parks() {
             className="h-9 text-xs border rounded-lg bg-background px-3 font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             <option value="all">All Amenities</option>
-            <option value="walking">Walking Trails</option>
-            <option value="playground">Playground</option>
-            <option value="train">Toy Train</option>
-            <option value="lakefront">Lakefront Deck</option>
-            <option value="gym">Outdoor Gym</option>
+            {amenityOptions.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
           </select>
         </div>
       </div>

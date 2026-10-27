@@ -12,7 +12,11 @@ import type { IRouter } from "express";
 const router: IRouter = Router();
 
 router.get("/parking/lots", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const lots = await db.select().from(parkingLotsTable).where(eq(parkingLotsTable.isActive, true));
+  const params = ListParkingLotsQueryParams.safeParse(req.query);
+  const district = params.success ? params.data.district : undefined;
+  const conditions = [eq(parkingLotsTable.isActive, true)];
+  if (district) conditions.push(eq(parkingLotsTable.district, district));
+  const lots = await db.select().from(parkingLotsTable).where(and(...conditions)).orderBy(parkingLotsTable.name);
   res.json(lots.map(l => ({ ...l, amenities: l.amenities ?? [] })));
 });
 

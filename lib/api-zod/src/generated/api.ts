@@ -966,6 +966,7 @@ export const UpdateGarbageRequestResponse = zod.object({
  * @summary List all parking lots
  */
 export const ListParkingLotsQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('Tamil Nadu district, e.g. Chennai'),
   "available": zod.coerce.boolean().optional()
 })
 
@@ -973,6 +974,7 @@ export const ListParkingLotsResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "totalSpots": zod.number(),
@@ -1007,6 +1009,7 @@ export const ListParkingReservationsResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "totalSpots": zod.number(),
@@ -1054,6 +1057,7 @@ export const CreateParkingReservationResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "totalSpots": zod.number(),
@@ -1090,6 +1094,7 @@ export const GetParkingReservationResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "totalSpots": zod.number(),
@@ -1126,6 +1131,7 @@ export const CancelParkingReservationResponse = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "totalSpots": zod.number(),
@@ -1151,6 +1157,7 @@ export const CancelParkingReservationResponse = zod.object({
  * @summary List public transport routes
  */
 export const ListTransportRoutesQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('Tamil Nadu district, e.g. Chennai'),
   "type": zod.enum(['bus', 'metro', 'tram']).optional(),
   "search": zod.coerce.string().optional()
 })
@@ -1160,6 +1167,7 @@ export const ListTransportRoutesResponseItem = zod.object({
   "routeNumber": zod.string(),
   "name": zod.string(),
   "type": zod.enum(['bus', 'metro', 'tram']),
+  "district": zod.string().nullish(),
   "origin": zod.string(),
   "destination": zod.string(),
   "frequency": zod.number(),
@@ -1184,6 +1192,7 @@ export const GetTransportRouteResponse = zod.object({
   "routeNumber": zod.string(),
   "name": zod.string(),
   "type": zod.enum(['bus', 'metro', 'tram']),
+  "district": zod.string().nullish(),
   "origin": zod.string(),
   "destination": zod.string(),
   "frequency": zod.number(),
@@ -1206,6 +1215,10 @@ export const GetTransportRouteResponse = zod.object({
 /**
  * @summary Get active transport alerts
  */
+export const ListTransportAlertsQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('Tamil Nadu district, e.g. Chennai')
+})
+
 export const ListTransportAlertsResponseItem = zod.object({
   "id": zod.string(),
   "routeId": zod.string().nullish(),
@@ -1222,6 +1235,7 @@ export const ListTransportAlertsResponse = zod.array(ListTransportAlertsResponse
  * @summary List all parks
  */
 export const ListParksQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('Tamil Nadu district, e.g. Chennai'),
   "search": zod.coerce.string().optional()
 })
 
@@ -1230,6 +1244,7 @@ export const ListParksResponseItem = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "area": zod.number(),
@@ -1254,6 +1269,7 @@ export const GetParkResponse = zod.object({
   "name": zod.string(),
   "description": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "latitude": zod.number(),
   "longitude": zod.number(),
   "area": zod.number(),
@@ -1268,10 +1284,15 @@ export const GetParkResponse = zod.object({
 /**
  * @summary List all libraries
  */
+export const ListLibrariesQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('Tamil Nadu district, e.g. Chennai')
+})
+
 export const ListLibrariesResponseItem = zod.object({
   "id": zod.string(),
   "name": zod.string(),
   "address": zod.string(),
+  "district": zod.string().nullish(),
   "phone": zod.string(),
   "openingTime": zod.string(),
   "closingTime": zod.string(),
@@ -1289,6 +1310,7 @@ export const listBooksQueryPageDefault = 1;
 export const listBooksQueryLimitDefault = 20;
 
 export const ListBooksQueryParams = zod.object({
+  "district": zod.coerce.string().optional().describe('Tamil Nadu district, e.g. Chennai'),
   "search": zod.coerce.string().optional(),
   "libraryId": zod.coerce.string().optional(),
   "available": zod.coerce.boolean().optional(),

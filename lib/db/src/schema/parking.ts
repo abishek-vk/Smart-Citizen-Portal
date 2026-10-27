@@ -10,6 +10,7 @@ export const parkingLotsTable = pgTable("parking_lots", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   address: text("address").notNull(),
+  district: text("district"),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
   totalSpots: integer("total_spots").notNull(),

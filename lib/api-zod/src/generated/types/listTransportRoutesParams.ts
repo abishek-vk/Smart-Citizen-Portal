@@ -8,6 +8,10 @@
 import type { ListTransportRoutesType } from './listTransportRoutesType';
 
 export type ListTransportRoutesParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 type?: ListTransportRoutesType;
 search?: string;
 };

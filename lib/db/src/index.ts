@@ -23,11 +23,13 @@ if (!databaseUrl) {
 
 const cleanDatabaseUrl = databaseUrl.replace(/\?sslmode=.*$/, "");
 
+// `lookup` is passed through to the socket connection, but pg's PoolConfig type doesn't declare it
 export const pool = new Pool({
   connectionString: cleanDatabaseUrl,
-  lookup: (hostname, _options, callback) => dns.lookup(hostname, { family: 4 }, callback),
+  lookup: (hostname: string, _options: unknown, callback: (...args: any[]) => void) =>
+    dns.lookup(hostname, { family: 4 }, callback),
   ssl: { rejectUnauthorized: false },
-});
+} as pg.PoolConfig);
 export const db = drizzle(pool, { schema });
 
 export * from "./schema";

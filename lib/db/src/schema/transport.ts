@@ -10,6 +10,7 @@ export const transportRoutesTable = pgTable("transport_routes", {
   routeNumber: text("route_number").notNull(),
   name: text("name").notNull(),
   type: transportTypeEnum("type").notNull(),
+  district: text("district"),
   origin: text("origin").notNull(),
   destination: text("destination").notNull(),
   frequency: integer("frequency").notNull(), // minutes between buses

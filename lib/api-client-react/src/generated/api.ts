@@ -68,12 +68,14 @@ import type {
   ListComplaintsParams,
   ListFeedbackParams,
   ListGarbageRequestsParams,
+  ListLibrariesParams,
   ListNotificationsParams,
   ListParkingLotsParams,
   ListParkingReservationsParams,
   ListParksParams,
   ListPaymentsParams,
   ListPropertyTaxesParams,
+  ListTransportAlertsParams,
   ListTransportRoutesParams,
   ListWaterTaxesParams,
   MessageResponse,
@@ -3114,20 +3116,27 @@ export function useGetTransportRoute<TData = Awaited<ReturnType<typeof getTransp
 
 
 
-export const getListTransportAlertsUrl = () => {
+export const getListTransportAlertsUrl = (params?: ListTransportAlertsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/transport/alerts`
+  return stringifiedParams.length > 0 ? `/api/transport/alerts?${stringifiedParams}` : `/api/transport/alerts`
 }
 
 /**
  * @summary Get active transport alerts
  */
-export const listTransportAlerts = async ( options?: RequestInit): Promise<TransportAlert[]> => {
+export const listTransportAlerts = async (params?: ListTransportAlertsParams, options?: RequestInit): Promise<TransportAlert[]> => {
 
-  return customFetch<TransportAlert[]>(getListTransportAlertsUrl(),
+  return customFetch<TransportAlert[]>(getListTransportAlertsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -3140,23 +3149,23 @@ export const listTransportAlerts = async ( options?: RequestInit): Promise<Trans
 
 
 
-export const getListTransportAlertsQueryKey = () => {
+export const getListTransportAlertsQueryKey = (params?: ListTransportAlertsParams,) => {
     return [
-    `/api/transport/alerts`
+    `/api/transport/alerts`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListTransportAlertsQueryOptions = <TData = Awaited<ReturnType<typeof listTransportAlerts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTransportAlerts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListTransportAlertsQueryOptions = <TData = Awaited<ReturnType<typeof listTransportAlerts>>, TError = ErrorType<unknown>>(params?: ListTransportAlertsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTransportAlerts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListTransportAlertsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListTransportAlertsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTransportAlerts>>> = ({ signal }) => listTransportAlerts({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTransportAlerts>>> = ({ signal }) => listTransportAlerts(params, { signal, ...requestOptions });
 
 
 
@@ -3174,11 +3183,11 @@ export type ListTransportAlertsQueryError = ErrorType<unknown>
  */
 
 export function useListTransportAlerts<TData = Awaited<ReturnType<typeof listTransportAlerts>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTransportAlerts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListTransportAlertsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTransportAlerts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListTransportAlertsQueryOptions(options)
+  const queryOptions = getListTransportAlertsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -3352,20 +3361,27 @@ export function useGetPark<TData = Awaited<ReturnType<typeof getPark>>, TError =
 
 
 
-export const getListLibrariesUrl = () => {
+export const getListLibrariesUrl = (params?: ListLibrariesParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/libraries`
+  return stringifiedParams.length > 0 ? `/api/libraries?${stringifiedParams}` : `/api/libraries`
 }
 
 /**
  * @summary List all libraries
  */
-export const listLibraries = async ( options?: RequestInit): Promise<Library[]> => {
+export const listLibraries = async (params?: ListLibrariesParams, options?: RequestInit): Promise<Library[]> => {
 
-  return customFetch<Library[]>(getListLibrariesUrl(),
+  return customFetch<Library[]>(getListLibrariesUrl(params),
   {
     ...options,
     method: 'GET'
@@ -3378,23 +3394,23 @@ export const listLibraries = async ( options?: RequestInit): Promise<Library[]> 
 
 
 
-export const getListLibrariesQueryKey = () => {
+export const getListLibrariesQueryKey = (params?: ListLibrariesParams,) => {
     return [
-    `/api/libraries`
+    `/api/libraries`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListLibrariesQueryOptions = <TData = Awaited<ReturnType<typeof listLibraries>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLibraries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListLibrariesQueryOptions = <TData = Awaited<ReturnType<typeof listLibraries>>, TError = ErrorType<unknown>>(params?: ListLibrariesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLibraries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListLibrariesQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListLibrariesQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLibraries>>> = ({ signal }) => listLibraries({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listLibraries>>> = ({ signal }) => listLibraries(params, { signal, ...requestOptions });
 
 
 
@@ -3412,11 +3428,11 @@ export type ListLibrariesQueryError = ErrorType<unknown>
  */
 
 export function useListLibraries<TData = Awaited<ReturnType<typeof listLibraries>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLibraries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListLibrariesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listLibraries>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListLibrariesQueryOptions(options)
+  const queryOptions = getListLibrariesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

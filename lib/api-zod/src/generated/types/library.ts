@@ -10,6 +10,8 @@ export interface Library {
   id: string;
   name: string;
   address: string;
+  /** @nullable */
+  district?: string | null;
   phone: string;
   openingTime: string;
   closingTime: string;

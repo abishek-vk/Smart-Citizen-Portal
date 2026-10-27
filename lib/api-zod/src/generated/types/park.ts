@@ -11,6 +11,8 @@ export interface Park {
   name: string;
   description: string;
   address: string;
+  /** @nullable */
+  district?: string | null;
   latitude: number;
   longitude: number;
   area: number;

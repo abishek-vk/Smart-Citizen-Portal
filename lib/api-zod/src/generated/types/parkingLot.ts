@@ -10,6 +10,8 @@ export interface ParkingLot {
   id: string;
   name: string;
   address: string;
+  /** @nullable */
+  district?: string | null;
   latitude: number;
   longitude: number;
   totalSpots: number;

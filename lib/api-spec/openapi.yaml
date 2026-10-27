@@ -703,6 +703,11 @@ paths:
       tags: [parking]
       summary: List all parking lots
       parameters:
+        - name: district
+          in: query
+          description: Tamil Nadu district, e.g. Chennai
+          schema:
+            type: string
         - name: available
           in: query
           schema:
@@ -806,6 +811,11 @@ paths:
       tags: [transport]
       summary: List public transport routes
       parameters:
+        - name: district
+          in: query
+          description: Tamil Nadu district, e.g. Chennai
+          schema:
+            type: string
         - name: type
           in: query
           schema:
@@ -849,6 +859,12 @@ paths:
       operationId: listTransportAlerts
       tags: [transport]
       summary: Get active transport alerts
+      parameters:
+        - name: district
+          in: query
+          description: Tamil Nadu district, e.g. Chennai
+          schema:
+            type: string
       responses:
         "200":
           description: Transport alerts
@@ -866,6 +882,11 @@ paths:
       tags: [parks]
       summary: List all parks
       parameters:
+        - name: district
+          in: query
+          description: Tamil Nadu district, e.g. Chennai
+          schema:
+            type: string
         - name: search
           in: query
           schema:
@@ -905,6 +926,12 @@ paths:
       operationId: listLibraries
       tags: [libraries]
       summary: List all libraries
+      parameters:
+        - name: district
+          in: query
+          description: Tamil Nadu district, e.g. Chennai
+          schema:
+            type: string
       responses:
         "200":
           description: Libraries list
@@ -921,6 +948,11 @@ paths:
       tags: [libraries]
       summary: Search books across all libraries
       parameters:
+        - name: district
+          in: query
+          description: Tamil Nadu district, e.g. Chennai
+          schema:
+            type: string
         - name: search
           in: query
           schema:
@@ -2103,6 +2135,8 @@ components:
           type: string
         address:
           type: string
+        district:
+          type: ["string", "null"]
         latitude:
           type: number
         longitude:
@@ -2201,6 +2235,8 @@ components:
         type:
           type: string
           enum: [bus, metro, tram]
+        district:
+          type: ["string", "null"]
         origin:
           type: string
         destination:
@@ -2279,6 +2315,8 @@ components:
           type: string
         address:
           type: string
+        district:
+          type: ["string", "null"]
         latitude:
           type: number
         longitude:
@@ -2309,6 +2347,8 @@ components:
           type: string
         address:
           type: string
+        district:
+          type: ["string", "null"]
         phone:
           type: string
         openingTime:

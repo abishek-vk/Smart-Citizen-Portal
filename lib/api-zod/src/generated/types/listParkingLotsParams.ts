@@ -7,5 +7,9 @@
  */
 
 export type ListParkingLotsParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 available?: boolean;
 };

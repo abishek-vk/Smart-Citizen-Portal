@@ -40,6 +40,7 @@ export function LiveCityMap({
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const markerMapRef = useRef<Map<string, L.Marker>>(new Map())
+  const fittedKeyRef = useRef("")
 
   // Calculate dynamic center if markers are provided
   const effectiveCenter: [number, number] = React.useMemo(() => {
@@ -185,6 +186,17 @@ export function LiveCityMap({
 
       markerMapRef.current.set(item.id, marker)
     })
+
+    // Re-frame the map when a different set of places is shown (e.g. another district),
+    // but not when the same places refresh their availability
+    const markerKey = markers.map((m) => m.id).sort().join(",")
+    if (markers.length > 0 && markerKey !== fittedKeyRef.current) {
+      fittedKeyRef.current = markerKey
+      map.fitBounds(L.latLngBounds(markers.map((m) => [m.latitude, m.longitude] as [number, number])), {
+        padding: [40, 40],
+        maxZoom: 14,
+      })
+    }
   }, [markers, onSelectMarker, onBookSpot])
 
   // Center & open popup when selectedId changes

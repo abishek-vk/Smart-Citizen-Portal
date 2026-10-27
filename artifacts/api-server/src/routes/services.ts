@@ -4,6 +4,7 @@ import { eq, and, count, desc, ilike, or, sum, gt, gte, inArray, isNull, ne, sql
 import { requireAuth, ensureUser, requireAdmin } from "../lib/auth";
 import {
   ListBooksQueryParams, BorrowBookBody,
+  ListTransportRoutesQueryParams, ListTransportAlertsQueryParams, ListParksQueryParams, ListLibrariesQueryParams,
   ListPaymentsQueryParams, ListNotificationsQueryParams,
   SubmitFeedbackBody, ListFeedbackQueryParams,
   ListCitizensQueryParams, ListAuditLogsQueryParams, GetRevenueReportQueryParams,
@@ -15,7 +16,15 @@ const router: IRouter = Router();
 
 // ─── TRANSPORT ───
 router.get("/transport/routes", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const rows = await db.select().from(transportRoutesTable).where(eq(transportRoutesTable.isActive, true));
+  const params = ListTransportRoutesQueryParams.safeParse(req.query);
+  const conditions: any[] = [eq(transportRoutesTable.isActive, true)];
+  if (params.success && params.data.district) conditions.push(eq(transportRoutesTable.district, params.data.district));
+  if (params.success && params.data.type) conditions.push(eq(transportRoutesTable.type, params.data.type));
+  if (params.success && params.data.search) {
+    const search = `%${params.data.search}%`;
+    conditions.push(or(ilike(transportRoutesTable.name, search), ilike(transportRoutesTable.origin, search), ilike(transportRoutesTable.destination, search)));
+  }
+  const rows = await db.select().from(transportRoutesTable).where(and(...conditions)).orderBy(transportRoutesTable.routeNumber);
   res.json(rows);
 });
 router.get("/transport/routes/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
@@ -26,13 +35,25 @@ router.get("/transport/routes/:id", requireAuth, ensureUser, async (req, res): P
   res.json({ route, stops });
 });
 router.get("/transport/alerts", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const alerts = await db.select().from(transportAlertsTable).orderBy(desc(transportAlertsTable.createdAt)).limit(20);
-  res.json(alerts);
+  const params = ListTransportAlertsQueryParams.safeParse(req.query);
+  const district = params.success ? params.data.district : undefined;
+  // Alerts belong to a district through their route; only show alerts for active routes that haven't expired
+  const routeConditions: any[] = [eq(transportRoutesTable.isActive, true)];
+  if (district) routeConditions.push(eq(transportRoutesTable.district, district));
+  const alerts = await db.select({ alert: transportAlertsTable }).from(transportAlertsTable)
+    .innerJoin(transportRoutesTable, eq(transportAlertsTable.routeId, transportRoutesTable.id))
+    .where(and(...routeConditions, or(isNull(transportAlertsTable.expiresAt), gt(transportAlertsTable.expiresAt, new Date()))))
+    .orderBy(desc(transportAlertsTable.createdAt)).limit(20);
+  res.json(alerts.map(a => a.alert));
 });
 
 // ─── PARKS ───
 router.get("/parks", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const rows = await db.select().from(parksTable).where(eq(parksTable.isActive, true));
+  const params = ListParksQueryParams.safeParse(req.query);
+  const conditions: any[] = [eq(parksTable.isActive, true)];
+  if (params.success && params.data.district) conditions.push(eq(parksTable.district, params.data.district));
+  if (params.success && params.data.search) conditions.push(ilike(parksTable.name, `%${params.data.search}%`));
+  const rows = await db.select().from(parksTable).where(and(...conditions)).orderBy(parksTable.name);
   res.json(rows.map(p => ({ ...p, amenities: p.amenities ?? [] })));
 });
 router.get("/parks/:id", requireAuth, ensureUser, async (req, res): Promise<void> => {
@@ -44,7 +65,10 @@ router.get("/parks/:id", requireAuth, ensureUser, async (req, res): Promise<void
 
 // ─── LIBRARIES & BOOKS ───
 router.get("/libraries", requireAuth, ensureUser, async (req, res): Promise<void> => {
-  const rows = await db.select().from(librariesTable).where(eq(librariesTable.isActive, true));
+  const params = ListLibrariesQueryParams.safeParse(req.query);
+  const conditions: any[] = [eq(librariesTable.isActive, true)];
+  if (params.success && params.data.district) conditions.push(eq(librariesTable.district, params.data.district));
+  const rows = await db.select().from(librariesTable).where(and(...conditions)).orderBy(librariesTable.name);
   res.json(rows);
 });
 router.get("/libraries/books", requireAuth, ensureUser, async (req, res): Promise<void> => {
@@ -52,13 +76,17 @@ router.get("/libraries/books", requireAuth, ensureUser, async (req, res): Promis
   const page = params.success ? (params.data.page ?? 1) : 1;
   const limit = params.success ? (params.data.limit ?? 20) : 20;
   const offset = (page - 1) * limit;
-  const conditions: any[] = [];
+  // Only books held by active libraries, optionally limited to one district
+  const libraryConditions: any[] = [eq(librariesTable.isActive, true)];
+  if (params.success && params.data.district) libraryConditions.push(eq(librariesTable.district, params.data.district));
+  const libraryIds = db.select({ id: librariesTable.id }).from(librariesTable).where(and(...libraryConditions));
+  const conditions: any[] = [inArray(booksTable.libraryId, libraryIds)];
   if (params.success && params.data.libraryId) conditions.push(eq(booksTable.libraryId, params.data.libraryId));
   if (params.success && params.data.search) conditions.push(or(ilike(booksTable.title, `%${params.data.search}%`), ilike(booksTable.author, `%${params.data.search}%`)));
   if (params.success && params.data.available) conditions.push(gt(booksTable.availableCopies, 0));
-  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const where = and(...conditions);
   const [{ total }] = await db.select({ total: count() }).from(booksTable).where(where);
-  const data = await db.select().from(booksTable).where(where).limit(limit).offset(offset);
+  const data = await db.select().from(booksTable).where(where).orderBy(booksTable.title).limit(limit).offset(offset);
   res.json({ data: data.map(b => ({ ...b, isAvailable: b.availableCopies > 0 })), pagination: { total: Number(total), page, limit, totalPages: Math.ceil(Number(total) / limit) } });
 });
 router.get("/libraries/borrowings", requireAuth, ensureUser, async (req, res): Promise<void> => {

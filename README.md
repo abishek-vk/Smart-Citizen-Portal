@@ -108,11 +108,13 @@ Smart-Citizen-Portal/
    pnpm --filter @workspace/db run push
    ```
 
-6. *(Optional)* Load sample departments, parking lots, transport routes, parks and libraries.
+6. *(Optional)* Load sample departments, plus parking lots, transport routes, parks and libraries for 10 Tamil Nadu districts.
 
    ```bash
-   pnpm --filter @workspace/api-server exec tsx src/seed.ts
+   pnpm --filter @workspace/api-server run seed
    ```
+
+   To refresh only the district data after editing `artifacts/api-server/src/data/tamil-nadu-districts.ts`, run `pnpm --filter @workspace/api-server run seed:districts`. It is safe to run more than once.
 
 7. Start the API and the web app together.
 

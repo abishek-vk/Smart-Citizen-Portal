@@ -7,6 +7,10 @@
  */
 
 export type ListBooksParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 search?: string;
 libraryId?: string;
 available?: boolean;

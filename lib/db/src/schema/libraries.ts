@@ -9,6 +9,7 @@ export const librariesTable = pgTable("libraries", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   address: text("address").notNull(),
+  district: text("district"),
   phone: text("phone").notNull(),
   openingTime: text("opening_time").notNull(),
   closingTime: text("closing_time").notNull(),

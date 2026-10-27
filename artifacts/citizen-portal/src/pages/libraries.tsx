@@ -5,18 +5,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Library, BookOpen, Clock, MapPin, Phone } from "lucide-react"
+import { DistrictSelect } from "@/components/district-select"
+import { useDistrict } from "@/lib/districts"
 
 export default function Libraries() {
-  const { data: libraries, isLoading: loadingLibs } = useListLibraries()
-  const { data: books, isLoading: loadingBooks } = useListBooks()
+  const [district, setDistrict] = useDistrict()
+  const { data: libraries, isLoading: loadingLibs } = useListLibraries({ district })
+  const { data: books, isLoading: loadingBooks } = useListBooks({ district })
+  const libraryName = (id: string) => libraries?.find((l) => l.id === id)?.name
   const { data: borrowings, isLoading: loadingBorrowings } = useListBorrowings()
 
   return (
     <div className="space-y-6">
       <PageHeader 
         title="Public Libraries" 
-        description="Find branches, search books, and manage borrowings."
-      />
+        description={`Public libraries and their catalogue in ${district}, plus your borrowings.`}
+      >
+        <DistrictSelect value={district} onChange={setDistrict} />
+      </PageHeader>
 
       <Tabs defaultValue="branches" className="w-full">
         <TabsList className="mb-6">
@@ -29,6 +35,10 @@ export default function Libraries() {
           <div className="grid gap-6 md:grid-cols-2">
             {loadingLibs ? (
               Array(2).fill(0).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
+            ) : libraries?.length === 0 ? (
+              <Card className="col-span-full border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">No libraries listed for {district} yet.</CardContent>
+              </Card>
             ) : libraries?.map((lib) => (
               <Card key={lib.id} className="hover-elevate">
                 <CardContent className="p-6">
@@ -41,18 +51,20 @@ export default function Libraries() {
                   
                   <div className="space-y-3 text-sm text-muted-foreground mb-6">
                     <div className="flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> {lib.address}</div>
-                    <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> {lib.phone}</div>
+                    {lib.phone && lib.phone !== "Not listed" && (
+                      <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-primary" /> {lib.phone}</div>
+                    )}
                     <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> {lib.openingTime} - {lib.closingTime}</div>
                   </div>
 
                   <div className="flex gap-4 p-3 bg-muted rounded-lg text-sm text-center">
                     <div className="flex-1">
-                      <div className="font-bold text-foreground text-lg">{lib.totalBooks}</div>
+                      <div className="font-bold text-foreground text-lg">{lib.totalBooks.toLocaleString("en-IN")}</div>
                       <div>Total Books</div>
                     </div>
                     <div className="w-px bg-border" />
                     <div className="flex-1">
-                      <div className="font-bold text-foreground text-lg">{lib.availableBooks}</div>
+                      <div className="font-bold text-foreground text-lg">{lib.availableBooks.toLocaleString("en-IN")}</div>
                       <div>Available</div>
                     </div>
                   </div>
@@ -65,7 +77,11 @@ export default function Libraries() {
         <TabsContent value="catalog">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {loadingBooks ? (
-              Array(6).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
+              Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
+            ) : books?.data.length === 0 ? (
+              <Card className="col-span-full border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground">No books catalogued for {district} yet.</CardContent>
+              </Card>
             ) : books?.data.map((book) => (
               <Card key={book.id}>
                 <CardContent className="p-5 flex gap-4">
@@ -75,7 +91,10 @@ export default function Libraries() {
                   <div className="flex flex-col justify-between py-1">
                     <div>
                       <h4 className="font-bold font-serif leading-tight mb-1">{book.title}</h4>
-                      <p className="text-sm text-muted-foreground">{book.author}</p>
+                      <p className="text-sm text-muted-foreground">{book.author}{book.publishedYear ? ` · ${book.publishedYear}` : ""}</p>
+                      {libraryName(book.libraryId) && (
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Library className="w-3 h-3" /> {libraryName(book.libraryId)}</p>
+                      )}
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <Badge variant="outline" className="text-[10px]">{book.genre}</Badge>

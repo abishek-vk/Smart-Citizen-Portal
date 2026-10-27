@@ -570,6 +570,8 @@ export interface ParkingLot {
   id: string;
   name: string;
   address: string;
+  /** @nullable */
+  district?: string | null;
   latitude: number;
   longitude: number;
   totalSpots: number;
@@ -653,6 +655,8 @@ export interface TransportRoute {
   routeNumber: string;
   name: string;
   type: TransportRouteType;
+  /** @nullable */
+  district?: string | null;
   origin: string;
   destination: string;
   frequency: number;
@@ -702,6 +706,8 @@ export interface Park {
   name: string;
   description: string;
   address: string;
+  /** @nullable */
+  district?: string | null;
   latitude: number;
   longitude: number;
   area: number;
@@ -717,6 +723,8 @@ export interface Library {
   id: string;
   name: string;
   address: string;
+  /** @nullable */
+  district?: string | null;
   phone: string;
   openingTime: string;
   closingTime: string;
@@ -1288,6 +1296,10 @@ export const ListGarbageRequestsStatus = {
 } as const;
 
 export type ListParkingLotsParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 available?: boolean;
 };
 
@@ -1307,6 +1319,10 @@ export const ListParkingReservationsStatus = {
 } as const;
 
 export type ListTransportRoutesParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 type?: ListTransportRoutesType;
 search?: string;
 };
@@ -1320,11 +1336,33 @@ export const ListTransportRoutesType = {
   tram: 'tram',
 } as const;
 
+export type ListTransportAlertsParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
+};
+
 export type ListParksParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 search?: string;
 };
 
+export type ListLibrariesParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
+};
+
 export type ListBooksParams = {
+/**
+ * Tamil Nadu district, e.g. Chennai
+ */
+district?: string;
 search?: string;
 libraryId?: string;
 available?: boolean;

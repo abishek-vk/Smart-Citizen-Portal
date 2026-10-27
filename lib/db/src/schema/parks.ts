@@ -7,6 +7,7 @@ export const parksTable = pgTable("parks", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   address: text("address").notNull(),
+  district: text("district"),
   latitude: real("latitude").notNull(),
   longitude: real("longitude").notNull(),
   area: real("area").notNull(),
