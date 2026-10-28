@@ -108,14 +108,14 @@ export default function AdminComplaints() {
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-3">
                       <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-1 rounded">#{complaint.id.slice(0,6)}</span>
-                      <h3 className="font-bold font-serif text-lg">{complaint.title}</h3>
+                      <h3 className="font-bold font-serif text-lg" data-no-translate>{complaint.title}</h3>
                     </div>
                     <Badge variant="outline" className={getPriorityColor(complaint.priority)}>{complaint.priority}</Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-4">{complaint.description}</p>
+                  <p className="text-sm text-muted-foreground mb-4" data-no-translate>{complaint.description}</p>
                   
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {complaint.location}</span>
+                    <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> <span data-no-translate>{complaint.location}</span></span>
                     <span>Reported: {format(new Date(complaint.createdAt), 'MMM d, h:mm a')}</span>
                     <span className="capitalize">Category: {String(complaint.category || '').replace(/_/g, ' ')}</span>
                   </div>

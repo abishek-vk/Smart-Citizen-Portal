@@ -42,7 +42,7 @@ export default function Transport() {
           <Card className="col-span-full border-dashed">
             <CardContent className="py-12 text-center text-muted-foreground">
               <Bus className="w-10 h-10 mx-auto mb-3 opacity-50" />
-              No routes listed for {district} yet.
+              {`No routes listed for ${district} yet.`}
             </CardContent>
           </Card>
         ) : routes?.map((route) => (

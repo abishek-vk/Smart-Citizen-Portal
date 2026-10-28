@@ -142,7 +142,7 @@ export default function AIAssistant() {
                   ) : (
                     <KarenAvatar className="h-8 w-8 text-sm" />
                   )}
-                  <div className={cn(
+                  <div data-no-translate className={cn(
                     "px-4 py-3 rounded-2xl text-sm leading-relaxed",
                     msg.role === 'user' 
                       ? "bg-primary text-primary-foreground rounded-tr-md" 

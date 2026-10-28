@@ -102,7 +102,7 @@ export default function Parking() {
           )}
 
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold font-serif">Parking in {district}</h2>
+            <h2 className="text-xl font-bold font-serif">{`Parking in ${district}`}</h2>
             <p className="text-sm text-muted-foreground">Click a lot to locate on map</p>
           </div>
 

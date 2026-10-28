@@ -37,7 +37,7 @@ export default function Libraries() {
               Array(2).fill(0).map((_, i) => <Skeleton key={i} className="h-48 rounded-xl" />)
             ) : libraries?.length === 0 ? (
               <Card className="col-span-full border-dashed">
-                <CardContent className="py-12 text-center text-muted-foreground">No libraries listed for {district} yet.</CardContent>
+                <CardContent className="py-12 text-center text-muted-foreground">{`No libraries listed for ${district} yet.`}</CardContent>
               </Card>
             ) : libraries?.map((lib) => (
               <Card key={lib.id} className="hover-elevate">
@@ -80,7 +80,7 @@ export default function Libraries() {
               Array(3).fill(0).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
             ) : books?.data.length === 0 ? (
               <Card className="col-span-full border-dashed">
-                <CardContent className="py-12 text-center text-muted-foreground">No books catalogued for {district} yet.</CardContent>
+                <CardContent className="py-12 text-center text-muted-foreground">{`No books catalogued for ${district} yet.`}</CardContent>
               </Card>
             ) : books?.data.map((book) => (
               <Card key={book.id}>

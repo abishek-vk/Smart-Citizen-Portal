@@ -7,7 +7,8 @@ import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
-import { LanguageProvider } from "@/components/language-provider"
+import { LanguageProvider, useLanguage } from "@/components/language-provider"
+import { clerkTamil } from "@/lib/translations-ta"
 
 // Pages
 import LandingPage from "@/pages/landing";
@@ -165,9 +166,11 @@ function ClerkAuthTokenSync() {
 
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
+  const { language } = useLanguage();
 
   return (
     <ClerkProvider
+      localization={language === "ta" ? clerkTamil : undefined}
       publishableKey={clerkPubKey}
       proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
@@ -179,7 +182,6 @@ function ClerkProviderWithRoutes() {
       <ClerkAuthTokenSync />
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-          <LanguageProvider>
             <ClerkQueryClientCacheInvalidator />
           <Switch>
             <Route path="/" component={HomeRedirect} />
@@ -213,7 +215,6 @@ function ClerkProviderWithRoutes() {
             <Route component={NotFound} />
           </Switch>
             <Toaster />
-          </LanguageProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </ClerkProvider>
@@ -223,7 +224,10 @@ function ClerkProviderWithRoutes() {
 function App() {
   return (
     <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
+      {/* Above ClerkProvider so Clerk's sign-in forms can follow the chosen language */}
+      <LanguageProvider>
+        <ClerkProviderWithRoutes />
+      </LanguageProvider>
     </WouterRouter>
   );
 }

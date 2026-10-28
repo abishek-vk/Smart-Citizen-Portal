@@ -198,13 +198,13 @@ function ComplaintCard({ complaint }: { complaint: any }) {
           </Badge>
           <span className="text-xs text-muted-foreground">{format(new Date(complaint.createdAt), 'MMM d, yyyy')}</span>
         </div>
-        <h3 className="font-bold font-serif text-lg leading-tight mb-2 line-clamp-1">{complaint.title}</h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10">{complaint.description}</p>
+        <h3 className="font-bold font-serif text-lg leading-tight mb-2 line-clamp-1" data-no-translate>{complaint.title}</h3>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 h-10" data-no-translate>{complaint.description}</p>
         
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground max-w-[60%] truncate">
             <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">{complaint.location}</span>
+            <span className="truncate" data-no-translate>{complaint.location}</span>
           </div>
           
           <Button
